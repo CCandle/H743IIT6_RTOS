@@ -1,0 +1,22 @@
+# CubeMX-Compatible .clang-format
+BasedOnStyle: LLVM
+IndentWidth: 2
+UseTab: Never
+BreakBeforeBraces: Attach
+ColumnLimit: 0
+
+# ---- 保持 CubeMX 样式 ----
+AllowShortFunctionsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+IndentCaseLabels: false
+AlignAfterOpenBracket: Align
+PointerAlignment: Left
+SpaceBeforeParens: ControlStatements
+
+# ---- 注释格式控制 ----
+# ReflowComments: false               # 不自动换行或重排注释
+CommentPragmas: '^/[*][*]'          # 仅匹配 Doxygen 风格 /** ... */
+SpacesBeforeTrailingComments: 1     # 保持注释前一个空格
+AlignTrailingComments: true         # 对齐尾随注释
+

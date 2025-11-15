@@ -1,0 +1,45 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/Debug/${workspaceFolderBasename}.elf",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32h7x.cfg"
+            ],
+            // "runToEntryPoint": "main",
+            "preLaunchTask": "Build Debug",
+            // "svdFile": "${workspaceFolder}/STM32F4xx.svd", // 可选：寄存器视图支持
+            "postLaunchCommands": [
+                "monitor reset halt"
+            ],
+            "showDevDebugOutput": "none",
+            "rtos": "FreeRTOS"
+        },
+        {
+            "name": "Release",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/Release/${workspaceFolderBasename}.elf",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32h7x.cfg"
+            ],
+            // "runToEntryPoint": "main",
+            "preLaunchTask": "Build Release",
+            // "svdFile": "${workspaceFolder}/STM32F4xx.svd",
+            "postLaunchCommands": [
+                "monitor reset halt"
+            ],
+            "rtos": "FreeRTOS",
+            "showDevDebugOutput": "none"
+        }
+    ]
+}

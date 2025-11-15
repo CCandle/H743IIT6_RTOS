@@ -1,0 +1,28 @@
+
+build/
+
+
+# --- CMake 生成文件 ---
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+
+
+
+
+# --- macOS 系统文件 ---
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Trashes
+*.swp
+*.tmp
+
+
+
+
+
+

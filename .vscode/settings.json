@@ -1,0 +1,84 @@
+{
+  // ================================
+  // 🧱 CMake 基本设置
+  // ================================
+  "cmake.useCMakePresets": "always",
+  "cmake.configureOnOpen": true,
+  "cmake.generator": "Ninja",
+  "cmake.sourceDirectory": "${workspaceFolder}",
+  "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
+  // ================================
+  // ⚙️ IntelliSense 设置（关键修正）
+  // ================================
+  // 启用错误波浪线但限制范围
+  "C_Cpp.errorSquiggles": "enabled",
+  // 切回默认引擎，Tag Parser 可能不更新
+  "C_Cpp.intelliSenseEngine": "default",
+  // 启用回退模式
+  "C_Cpp.intelliSenseEngineFallback": "enabled",
+  // 开启日志用于调试
+  "C_Cpp.loggingLevel": "Error",
+  // 关键：让 CMake Tools 完全管理配置
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  // 注释掉手动配置，让 CMake Tools 自动处理
+  // "C_Cpp.default.compileCommands": "${workspaceFolder}/build/Release/compile_commands.json",
+  // "C_Cpp.default.compilerPath": "/opt/homebrew/bin/arm-none-eabi-g++",
+  // "C_Cpp.default.cppStandard": "c++20",
+  // "C_Cpp.default.cStandard": "c11",
+  // "C_Cpp.default.includePath": [
+  //   "${workspaceFolder}/App"
+  // ],
+  // ================================
+  // 🔧 缓存和性能设置
+  // ================================
+  // 清除 IntelliSense 缓存
+  "C_Cpp.intelliSenseCacheSize": 512,
+  "C_Cpp.intelliSenseCachePath": "${workspaceFolder}/.vscode/.cache",
+  // ================================
+  // 💡 编辑体验优化
+  // ================================
+  "C_Cpp.autocompleteAddParentheses": true,
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "editor.suggestSelection": "first",
+  "editor.inlineSuggest.enabled": true,
+  "C_Cpp.updateChannel": "Default",
+  "editor.tabSize": 2,
+  "editor.indentSize": "tabSize",
+  // ================================
+  // 🧩 文件关联
+  // ================================
+  "files.associations": {
+    "*.ino": "c",
+    "tim.h": "c",
+    "cmsis_os.h": "c",
+    "adc.h": "c",
+    "usbd_def.h": "c",
+    "cstdint": "cpp",
+    "array": "cpp",
+    "vector": "cpp",
+    "string": "cpp",
+    "cstring": "cpp",
+    "cstdio": "cpp",
+    "cmath": "cpp",
+    "algorithm": "cpp",
+    "iterator": "cpp",
+    "memory": "cpp",
+    "numeric": "cpp",
+    "optional": "cpp",
+    "tuple": "cpp",
+    "type_traits": "cpp",
+    "utility": "cpp",
+    "format": "cpp",
+    "compare": "cpp",
+    "string_view": "cpp",
+    "span": "cpp",
+    "cstdarg": "cpp",
+    "gpio.h": "c",
+    "memp_std.h": "c",
+    "lwip.h": "c",
+    "ethernetif.h": "c"
+  },
+  "cortex-debug.variableUseNaturalFormat": false
+}
