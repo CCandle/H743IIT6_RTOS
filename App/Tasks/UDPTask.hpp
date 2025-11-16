@@ -67,7 +67,7 @@ public:
       }
 
       // 每隔2秒发送一次
-      vTaskDelay(pdMS_TO_TICKS(2));
+      vTaskDelay(pdMS_TO_TICKS(2000));
     }
 
     // 清理（通常不会执行到这里）
