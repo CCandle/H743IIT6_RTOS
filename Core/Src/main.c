@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "lwip.h"
+#include "spi.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -57,7 +58,10 @@ void MX_FREERTOS_Init(void);
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern void main_cpp(void);
+
+extern void sysInit(void);
+extern void osInit(void);
+
 #ifdef __cplusplus
 }
 #endif
@@ -103,13 +107,15 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  main_cpp();
+  sysInit();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+  MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
+  osInit();
 
   /* USER CODE END 2 */
 
@@ -163,7 +169,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 5;
   RCC_OscInitStruct.PLL.PLLN = 192;
   RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
+  RCC_OscInitStruct.PLL.PLLQ = 8;
   RCC_OscInitStruct.PLL.PLLR = 2;
   RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_2;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
@@ -190,6 +196,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
+  /** Enables the Clock Security System
+  */
+  HAL_RCC_EnableCSS();
 }
 
 /* USER CODE BEGIN 4 */
