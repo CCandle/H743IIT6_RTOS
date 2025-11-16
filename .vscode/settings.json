@@ -11,7 +11,7 @@
   // ⚙️ IntelliSense 设置（关键修正）
   // ================================
   // 启用错误波浪线但限制范围
-  "C_Cpp.errorSquiggles": "enabled",
+  "C_Cpp.errorSquiggles": "disabled",
   // 切回默认引擎，Tag Parser 可能不更新
   "C_Cpp.intelliSenseEngine": "default",
   // 启用回退模式
@@ -51,6 +51,7 @@
   // ================================
   "files.associations": {
     "*.ino": "c",
+    "*.hpp": "cpp",
     "tim.h": "c",
     "cmsis_os.h": "c",
     "adc.h": "c",
@@ -78,7 +79,11 @@
     "gpio.h": "c",
     "memp_std.h": "c",
     "lwip.h": "c",
-    "ethernetif.h": "c"
+    "ethernetif.h": "c",
+    "if_port.h": "c",
+    "sys.h": "c",
+    "stm32h7xx.h": "c",
+    "stm32h743xx.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }

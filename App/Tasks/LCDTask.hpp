@@ -1,8 +1,9 @@
 #pragma once
 #include "Lib/TaskBase.hpp"
 #include "gpio.h"
-#include "lt7680.hpp"
-#include "lt7680_if.hpp"
+// #include "lt7680.hpp"
+// #include "lt7680_if.hpp"
+#include "LT768_Lib.h"
 #include "main.h"
 #include "spi.h"
 
@@ -15,24 +16,50 @@
 
 class LCDTask : public RAM_D2Task<LCDTask, 1024> {
 public:
+  void StartUp_picture(void) {
+    Select_Main_Window_24bpp();
+    Main_Image_Start_Address(0);
+    Main_Image_Width(LCD_XSIZE_TFT);
+    Main_Window_Start_XY(0, 0);
+    Canvas_Image_Start_address(0);
+    Canvas_image_width(LCD_XSIZE_TFT);
+    Active_Window_XY(0, 0);
+    Active_Window_WH(LCD_XSIZE_TFT, LCD_YSIZE_TFT);
+  }
+
+  void Load_Drow_Dialog(void) // 从左到右  从上到下
+  {
+    // LT768_DrawSquare_Fill(0, 0, 480, 270, color65k_white);
+    Active_Window_XY(0, 30);
+    Active_Window_WH(4000, 1200);
+    // LT768_DrawSquare_Fill(120, 50, 250, 200, color65k_red);
+  }
+  
   void Run() {
-    LT7680_IF iface(&hspi2, LCD_CS_GPIO_Port, LCD_CS_Pin, LCD_NRST_GPIO_Port, LCD_NRST_Pin, delay_ms);
-    LT7680 lcd(iface);
-    uint8_t status = 0x00;
+    Parallel_Init();
+    LT768_Init();
 
-    status = lcd.LCD_StatusRead();
-    lcd.init();
-    status = lcd.LCD_StatusRead();
-    lcd.pwm1_init(true, 0, 200, 100, 100); // enable backlight as vendor did
-    lcd.display_on();
+    vTaskDelay(pdMS_TO_TICKS(300));
 
-    for (;;) {
-      lcd.fill_screen(0xF800); // red
-      vTaskDelay(pdMS_TO_TICKS(1000));
-      lcd.fill_screen(0x07E0); // green
-      vTaskDelay(pdMS_TO_TICKS(1000));
-      lcd.fill_screen(0x001F); // blue
-      vTaskDelay(pdMS_TO_TICKS(1000));
+    Display_ON();
+    StartUp_picture();
+
+    vTaskDelay(pdMS_TO_TICKS(300));
+
+    LT768_PWM1_Init(1, 0, 50, 100, 100);
+
+    Load_Drow_Dialog();
+
+    while (1) {
+      // Fill the screen with red, green and blue with rectangular function
+      LT768_DrawSquare_Fill(0, 0, LCD_XSIZE_TFT, LCD_YSIZE_TFT, Red);
+      delay_ms(1000);
+
+      LT768_DrawSquare_Fill(0, 0, LCD_XSIZE_TFT, LCD_YSIZE_TFT, Green);
+      delay_ms(1000);
+
+      LT768_DrawSquare_Fill(0, 0, LCD_XSIZE_TFT, LCD_YSIZE_TFT, Blue);
+      delay_ms(1000);
     }
   }
 
