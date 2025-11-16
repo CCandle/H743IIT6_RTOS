@@ -1,8 +1,8 @@
 #include "UartLogger.hpp"
-// #include "cmsis_os.h"
-// #include "semphr.h"
-// #include "FreeRTOS.h"
-// #include "task.h"
+#include "cmsis_os.h"
+#include "semphr.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include <cstdio>
 // #include "mutex.h"
 
@@ -14,7 +14,7 @@ static uint8_t  buf[BUF_SIZE];
 static volatile uint16_t head = 0;
 static volatile uint16_t tail = 0;
 static UART_HandleTypeDef *gUart = nullptr;
-// static SemaphoreHandle_t mutex = nullptr;
+static SemaphoreHandle_t mutex = nullptr;
 
 static void trySend()
 {
@@ -32,26 +32,26 @@ static void trySend()
 void init(UART_HandleTypeDef *huart)
 {
     gUart = huart;
-    // mutex = xSemaphoreCreateMutex();
+    mutex = xSemaphoreCreateMutex();
     setvbuf(stdout, NULL, _IONBF, 0);
 }
 
 void putChar(char c)
 {
-    // xSemaphoreTake(mutex, portMAX_DELAY);
+    xSemaphoreTake(mutex, portMAX_DELAY);
 
     uint16_t next = (head + 1) % BUF_SIZE;
     while (next == tail) {
-        // xSemaphoreGive(mutex);
-        // taskYIELD();
-        // xSemaphoreTake(mutex, portMAX_DELAY);
+        xSemaphoreGive(mutex);
+        taskYIELD();
+        xSemaphoreTake(mutex, portMAX_DELAY);
     }
 
     buf[head] = (uint8_t)c;
     head = next;
 
     trySend();
-    // xSemaphoreGive(mutex);
+    xSemaphoreGive(mutex);
 }
 
 } // namespace UartLogger

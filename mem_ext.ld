@@ -17,7 +17,7 @@
 /* ======================================================================= */
 SECTIONS
 {
-wip_sec (NOLOAD) : 
+  wip_sec (NOLOAD) : 
   { 
     . = ABSOLUTE(0x30040000); 
     *(.RxDecripSection) 

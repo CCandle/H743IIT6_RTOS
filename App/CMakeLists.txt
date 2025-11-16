@@ -40,7 +40,7 @@ target_include_directories(App PUBLIC
 
 # ---- Language specific settings ----
 # C++ settings
-target_compile_features(App PUBLIC cxx_std_20)
+target_compile_features(App PUBLIC cxx_std_23)
 target_compile_options(App PRIVATE 
     $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>
     $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
