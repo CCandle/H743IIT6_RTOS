@@ -8,13 +8,13 @@
 // #define SECTION_D2 __attribute__((section(".d2")))
 // #define SECTION_D3 __attribute__((section(".d3")))
 
-extern uint8_t __start_itcm_code[], __end_itcm_code[];
-extern uint8_t __start_dtcm_bss[], __end_dtcm_bss[];
-extern uint8_t __start_axi_bss[], __end_axi_bss[];
-extern uint8_t __start_d2_bss[], __end_d2_bss[];
-extern uint8_t __start_d3_bss[], __end_d3_bss[];
+// extern uint8_t __start_itcm_code[], __end_itcm_code[];
+// extern uint8_t __start_dtcm_bss[], __end_dtcm_bss[];
+// extern uint8_t __start_axi_bss[], __end_axi_bss[];
+// extern uint8_t __start_d2_bss[], __end_d2_bss[];
+// extern uint8_t __start_d3_bss[], __end_d3_bss[];
 
-namespace MEM {
+namespace Memory {
 __attribute__((section(".dtcm.bss"))) static uint8_t DTCMHeap[16 * 1024];
 __attribute__((section(".axi.bss"))) static uint8_t AXIHeap[32 * 1024];
 __attribute__((section(".d2.bss"))) static uint8_t D2Heap[8 * 1024];
@@ -29,19 +29,19 @@ static HeapRegion_t MemoryRegions[] =
         {nullptr, 0} // Terminator
 };
 
-void ZeroCustomBss() {
-  auto clear = [](uint8_t* start, uint8_t* end) {
-    for (; start < end; ++start)
-      *start = 0;
-  };
-  clear(__start_dtcm_bss, __end_dtcm_bss);
-  clear(__start_axi_bss, __end_axi_bss);
-  clear(__start_d2_bss, __end_d2_bss);
-  clear(__start_d3_bss, __end_d3_bss);
-}
+// void ZeroCustomBss() {
+//   auto clear = [](uint8_t* start, uint8_t* end) {
+//     for (; start < end; ++start)
+//       *start = 0;
+//   };
+//   clear(__start_dtcm_bss, __end_dtcm_bss);
+//   clear(__start_axi_bss, __end_axi_bss);
+//   clear(__start_d2_bss, __end_d2_bss);
+//   clear(__start_d3_bss, __end_d3_bss);
+// }
 
 inline void Init() {
   vPortDefineHeapRegions(MemoryRegions);
 }
 
-} // namespace MEM
+} // namespace Memory

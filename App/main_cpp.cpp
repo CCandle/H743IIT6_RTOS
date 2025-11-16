@@ -11,11 +11,12 @@ void TaskStartFailHandle();
  * @details 初始化顺序：MEM -> TASKS -> SCHEDULER
  */
 extern "C" void main_cpp(void) {
-  MEM::Init();
+  Memory::Init();
   uartLoggerInit(&huart1);
   printf("USART1 printf ready!\r\n");
   HAL_UART_Transmit_IT(&huart1, (uint8_t*)"USART1 HAL_UART_Transmit_IT ready!\r\n", 36);
-  StartMemRegionTasks();
+  Tasks::startTasks();
+  // StartMemRegionTasks();
 }
 
 void TaskStartFailHandle() {
