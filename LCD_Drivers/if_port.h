@@ -1,51 +1,50 @@
 /********************* COPYRIGHT  **********************
-* File Name        : if_port.h
-* Author           : Levetop Electronics
-* Version          : V1.0
-* Date             : 2017-9-11
-* Description      : Ñ¡Ôñ²»Í¬µÄÇý¶¯½Ó¿Ú
-********************************************************/
-
-
+ * File Name        : if_port.h
+ * Author           : Levetop Electronics
+ * Version          : V1.0
+ * Date             : 2017-9-11
+ * Description      : Ñ¡ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½
+ ********************************************************/
+#pragma once
 #include "char.h"
+#include "gpio.h"
 
-//Ñ¡ÔñÍ¨ÐÅ·½Ê½
+// Ñ¡ï¿½ï¿½Í¨ï¿½Å·ï¿½Ê½
 
-#define STM32_FSMC_8	0		// Ê¹ÓÃSTM32µÄÍâÉèFSMCÇý¶¯LT768(STM32Ó²¼þÄ£Äâ8080×ÜÏß(8Î»))
-#define STM32_FSMC_16	0		// Ê¹ÓÃSTM32µÄÍâÉèFSMCÇý¶¯LT738(STM32Ó²¼þÄ£Äâ8080×ÜÏß(16Î»))
-#define STM32_SPI		1		// Ê¹ÓÃSTM32µÄSPIÇý¶¯LT738
+#define STM32_FSMC_8 0  // Ê¹ï¿½ï¿½STM32ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½FSMCï¿½ï¿½ï¿½ï¿½LT768(STM32Ó²ï¿½ï¿½Ä£ï¿½ï¿½8080ï¿½ï¿½ï¿½ï¿½(8Î»))
+#define STM32_FSMC_16 0 // Ê¹ï¿½ï¿½STM32ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½FSMCï¿½ï¿½ï¿½ï¿½LT738(STM32Ó²ï¿½ï¿½Ä£ï¿½ï¿½8080ï¿½ï¿½ï¿½ï¿½(16Î»))
+#define STM32_SPI 1     // Ê¹ï¿½ï¿½STM32ï¿½ï¿½SPIï¿½ï¿½ï¿½ï¿½LT738
 
-
-
-//Ñ¡Ôñ8Î»8080×ÜÏßÇý¶¯
+// Ñ¡ï¿½ï¿½8Î»8080ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #if STM32_FSMC_8
-#define LCD_BASE0        ((u32)(0x6C000000 | 0x0000007E))
-#define LCD_BASE1        ((u32)(0x6C000000 | 0x00000080))
+#define LCD_BASE0 ((u32)(0x6C000000 | 0x0000007E))
+#define LCD_BASE1 ((u32)(0x6C000000 | 0x00000080))
 #endif
 
-//Ñ¡Ôñ16Î»8080×ÜÏßÇý¶¯
+// Ñ¡ï¿½ï¿½16Î»8080ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #if STM32_FSMC_16
-#define LCD_BASE0        ((u32)(0x6C000000 | 0x0000007E))
-#define LCD_BASE1        ((u32)(0x6C000000 | 0x00000080))
+#define LCD_BASE0 ((u32)(0x6C000000 | 0x0000007E))
+#define LCD_BASE1 ((u32)(0x6C000000 | 0x00000080))
 #endif
 
-//Ñ¡ÔñSPIÇý¶¯
+// Ñ¡ï¿½ï¿½SPIï¿½ï¿½ï¿½ï¿½
 #if STM32_SPI
 
-		#define SPI_SDIN()  {GPIOE->MODER&=~(3<<(2*2);GPIOE->MODER|=0<<2*2;}///PF11ÊäÈëÄ£Ê½
-		#define SPI_SDOUT() {GPIOE->MODER&=~(3<<(2*3));GPIOE->MODER|=1<<2*3;} 	//PF11Êä³öÄ£Ê½
+#define SPI_SDIN()                                \
+  {GPIOE->MODER&=~(3<<(2*2);GPIOE->MODER|=0<<2*2; \
+  } /// PF11ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define SPI_SDOUT()                  \
+  {                                  \
+    GPIOE->MODER &= ~(3 << (2 * 3)); \
+    GPIOE->MODER |= 1 << 2 * 3;      \
+  } // PF11ï¿½ï¿½ï¿½Ä£Ê½
 
-												
-		//-----------------¶Ë¿Ú¶¨Òå----------------  					   
-		#define SPI_CS_choosed     HAL_GPIO_WritePin(GPIOB,GPIO_PIN_12,GPIO_PIN_RESET)
-		#define SPI_CS_chooseless    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_12,GPIO_PIN_SET) 
-		//#define LCD_RST PGout(6)			//×¢Òâ£ºÔ­¹¤³ÌÖÐ²¢Î´Ê¹ÓÃ´Ëºê¶¨Òå¸´Î»
+void SPI_CS_choosed();
+void SPI_CS_chooseless();
 #endif
-
 
 void Delay_us(u16 time);
 void Delay_ms(u16 time);
-
 
 void Parallel_Init(void);
 void FSMC_IO_Init(void);
@@ -64,20 +63,15 @@ void SPI_DataWrite_Pixel(u16 data);
 u8 SPI_StatusRead(void);
 u16 SPI_DataRead(void);
 
-
 void LCD_CmdWrite(u8 cmd);
 void LCD_DataWrite(u8 data);
 void LCD_DataWrite_Pixel(u16 data);
 u8 LCD_StatusRead(void);
 u16 LCD_DataRead(void);
-	 
-void Delay_us(u16 time); //ÑÓÊ±º¯Êýus¼¶
-void Delay_ms(u16 time); //ÑÓÊ±º¯Êýms¼¶
+
+void Delay_us(u16 time); // ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½usï¿½ï¿½
+void Delay_ms(u16 time); // ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½msï¿½ï¿½
 
 void test_SPIIO(void);
 
 void FMSC_16_DataWrite_Pixel(u16 data);
-
-
-
-

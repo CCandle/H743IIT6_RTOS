@@ -1,229 +1,217 @@
 
 #include "LT768_Lib.h"
-#include "main.h"
-#include "gpio.h"
 #include "FreeRTOS.h"
+#include "gpio.h"
+#include "main.h"
 #include "task.h"
 
-unsigned char CCLK;    // LT768µÄÄÚºËÊ±ÖÓÆµÂÊ    
-unsigned char MCLK;    // SDRAMµÄÊ±ÖÓÆµÂÊ
-unsigned char SCLK;    // LCDµÄÉ¨ÃèÊ±ÖÓÆµÂÊ
-
+unsigned char CCLK; // LT768ï¿½ï¿½ï¿½Úºï¿½Ê±ï¿½ï¿½Æµï¿½ï¿½
+unsigned char MCLK; // SDRAMï¿½ï¿½Ê±ï¿½ï¿½Æµï¿½ï¿½
+unsigned char SCLK; // LCDï¿½ï¿½É¨ï¿½ï¿½Ê±ï¿½ï¿½Æµï¿½ï¿½
 
 //---------------------------------------------------------------------------------------------------------------------------------
 
-//¸´Î»LT768
-void LT768_HW_Reset(void)
-{		
-	//×¢Òâ£º¸´Î»Òý½Å³õÊ¼»¯ÅäÖÃÒÑµ¥¶ÀÍê³É£¬´Ë´¦Ö»ÐèÒª²Ù×÷´ËÒý½Å¾ÍOK
-	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_11,GPIO_PIN_SET);
-	vTaskDelay(10);
-	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_11,GPIO_PIN_RESET);
-	vTaskDelay(pdMS_TO_TICKS(100));				   
-	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_11,GPIO_PIN_SET);
-	vTaskDelay(200);
+// ï¿½ï¿½Î»LT768
+void LT768_HW_Reset(void) {
+  HAL_GPIO_WritePin(LCD_NRST_GPIO_Port, LCD_NRST_Pin, GPIO_PIN_SET);
+  vTaskDelay(10);
+  HAL_GPIO_WritePin(LCD_NRST_GPIO_Port, LCD_NRST_Pin, GPIO_PIN_RESET);
+  vTaskDelay(pdMS_TO_TICKS(300));
+  HAL_GPIO_WritePin(LCD_NRST_GPIO_Port, LCD_NRST_Pin, GPIO_PIN_SET);
+  vTaskDelay(200);
 }
 
-unsigned char system_ok=0;
+unsigned char system_ok = 0;
 uint8_t z = 0;
 
-//¼ì²éLT768ÏµÍ³
-void System_Check_Temp(void)
-{
-	
-	unsigned char i=0;
-	unsigned char temp=0;
+// ï¿½ï¿½ï¿½LT768ÏµÍ³
+void System_Check_Temp(void) {
 
-	do
-	{
-		z++;
-		if((LCD_StatusRead()&0x02)==0x00)    
-		{
-			vTaskDelay(pdMS_TO_TICKS(100));                  //ÈôMCU ËÙ¶ÈÌ«¿ì£¬±ØÒª•rÊ¹ÓÃ
-			LCD_CmdWrite(0x01);
-			vTaskDelay(pdMS_TO_TICKS(100));                  //ÈôMCU ËÙ¶ÈÌ«¿ì£¬±ØÒª•rÊ¹ÓÃ
-			temp =LCD_DataRead();
-			if((temp & 0x80)==0x80)       //¼ì²âCCR¼Ä´æÆ÷PLLÊÇ·ñ×¼±¸ºÃ
-			{
-				system_ok=1;
-				i=0;
-			}
-			
-			else
-			{
-				vTaskDelay(pdMS_TO_TICKS(100)); //ÈôMCU ËÙ¶ÈÌ«¿ì£¬±ØÒª•rÊ¹ÓÃ
-				LCD_CmdWrite(0x01);
-				vTaskDelay(pdMS_TO_TICKS(100)); //ÈôMCU ËÙ¶ÈÌ«¿ì£¬±ØÒª•rÊ¹ÓÃ
-				LCD_DataWrite(0x80);
-			}
-		}
-		else
-		{
-			system_ok=0;
-			i++;
-		}
-		if(system_ok==0 && i==8)
-		{
-			LT768_HW_Reset(); //note1
-			i=0;
-		}
-	}while(system_ok==0);
+  unsigned char i = 0;
+  unsigned char temp = 0;
+
+  do {
+    z++;
+    if (((temp = LCD_StatusRead()) & 0x02) == 0x00) {
+      vTaskDelay(pdMS_TO_TICKS(10)); // ï¿½ï¿½MCU ï¿½Ù¶ï¿½Ì«ï¿½ì£¬ï¿½ï¿½Òªï¿½rÊ¹ï¿½ï¿½
+      LCD_CmdWrite(0x01);
+      vTaskDelay(pdMS_TO_TICKS(10)); // ï¿½ï¿½MCU ï¿½Ù¶ï¿½Ì«ï¿½ì£¬ï¿½ï¿½Òªï¿½rÊ¹ï¿½ï¿½
+      temp = LCD_DataRead();
+      if ((temp & 0x80) == 0x80) // ï¿½ï¿½ï¿½CCRï¿½Ä´ï¿½ï¿½ï¿½PLLï¿½Ç·ï¿½×¼ï¿½ï¿½ï¿½ï¿½
+      {
+        system_ok = 1;
+        i = 0;
+      }
+      else {
+        vTaskDelay(pdMS_TO_TICKS(100)); // ï¿½ï¿½MCU ï¿½Ù¶ï¿½Ì«ï¿½ì£¬ï¿½ï¿½Òªï¿½rÊ¹ï¿½ï¿½
+        LCD_CmdWrite(0x01);
+        vTaskDelay(pdMS_TO_TICKS(100)); // ï¿½ï¿½MCU ï¿½Ù¶ï¿½Ì«ï¿½ì£¬ï¿½ï¿½Òªï¿½rÊ¹ï¿½ï¿½
+        LCD_DataWrite(0x80);
+      }
+    } else {
+      system_ok = 0;
+      i++;
+    }
+    if (system_ok == 0 && i == 20) {
+      LT768_HW_Reset(); // note1
+      i = 0;
+    }
+  } while (system_ok == 0);
 }
 
-////¼ì²éLT768ÏµÍ³
-//void System_Check_Temp(void)
+////ï¿½ï¿½ï¿½LT768ÏµÍ³
+// void System_Check_Temp(void)
 //{
-//    unsigned char retry_count = 0;
-//    unsigned char max_retries = 10; // ×î´óÖØÊÔ´ÎÊý
-//    unsigned char temp = 0;
+//     unsigned char retry_count = 0;
+//     unsigned char max_retries = 10; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½
+//     unsigned char temp = 0;
 ////    system_ok = 0;
-//    
-//    // ÏÈµÈ´ýÒ»¶ÎÊ±¼äÈÃÐ¾Æ¬ÎÈ¶¨
+//
+//    // ï¿½ÈµÈ´ï¿½Ò»ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ð¾Æ¬ï¿½È¶ï¿½
 //    vTaskDelay(10);
-//    
+//
 //    do
 //    {
 //			z++;
-//        // ¼ì²é×´Ì¬¼Ä´æÆ÷ÊÇ·ñ¿ÉÐ´
-//        if((LCD_StatusRead() & 0x02) == 0x00)    // ¼ì²é×´Ì¬¼Ä´æÆ÷bit1(Ã¦±êÖ¾)
+//        // ï¿½ï¿½ï¿½×´Ì¬ï¿½Ä´ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ð´
+//        if((LCD_StatusRead() & 0x02) == 0x00)    // ï¿½ï¿½ï¿½×´Ì¬ï¿½Ä´ï¿½ï¿½ï¿½bit1(Ã¦ï¿½ï¿½Ö¾)
 //        {
-//            vTaskDelay(2); // ±ØÒªÑÓÊ±
-//            
-//            // ¶ÁÈ¡CCR¼Ä´æÆ÷(0x01)
+//            vTaskDelay(2); // ï¿½ï¿½Òªï¿½ï¿½Ê±
+//
+//            // ï¿½ï¿½È¡CCRï¿½Ä´ï¿½ï¿½ï¿½(0x01)
 //            LCD_CmdWrite(0x01);
 //            vTaskDelay(1);
 //            temp = LCD_DataRead();
-//            
-//            // ¼ì²âCCR¼Ä´æÆ÷bit7(PLL¾ÍÐ÷±êÖ¾)
-//            if((temp & 0x80) == 0x80)       
+//
+//            // ï¿½ï¿½ï¿½CCRï¿½Ä´ï¿½ï¿½ï¿½bit7(PLLï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾)
+//            if((temp & 0x80) == 0x80)
 //            {
 //                system_ok = 1;
-//                break; // ³É¹¦¾ÍÍË³öÑ­»·
+//                break; // ï¿½É¹ï¿½ï¿½ï¿½ï¿½Ë³ï¿½Ñ­ï¿½ï¿½
 //            }
 //            else
 //            {
-//                // PLLÎ´¾ÍÐ÷£¬³¢ÊÔÖØÐÂÅäÖÃ
+//                // PLLÎ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //                vTaskDelay(2);
 //                LCD_CmdWrite(0x01);
 //                vTaskDelay(2);
-//                LCD_DataWrite(0x80); // È·±£PLLÊ¹ÄÜ
-//                
-//                // Ôö¼ÓPLLËø¶¨µÈ´ýÊ±¼ä
+//                LCD_DataWrite(0x80); // È·ï¿½ï¿½PLLÊ¹ï¿½ï¿½
+//
+//                // ï¿½ï¿½ï¿½ï¿½PLLï¿½ï¿½ï¿½ï¿½ï¿½È´ï¿½Ê±ï¿½ï¿½
 //                vTaskDelay(5);
 //            }
 //        }
 //        else
 //        {
-//            // Ð¾Æ¬Ã¦£¬µÈ´ýºóÖØÊÔ
+//            // Ð¾Æ¬Ã¦ï¿½ï¿½ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //            vTaskDelay(5);
 //        }
-//        
+//
 //        retry_count++;
-//        
-//        // Èç¹û¶à´Î³¢ÊÔÊ§°Ü£¬Ö´ÐÐÓ²¼þ¸´Î»
+//
+//        // ï¿½ï¿½ï¿½ï¿½ï¿½Î³ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½Ö´ï¿½ï¿½Ó²ï¿½ï¿½ï¿½ï¿½Î»
 //        if(retry_count >= max_retries && system_ok == 0)
 //        {
-//            LT768_HW_Reset(); // Ó²¼þ¸´Î»
-//            vTaskDelay(50); // ¸´Î»ºóµÈ´ý×ã¹»³¤Ê±¼äÈÃÐ¾Æ¬ÖØÐÂ³õÊ¼»¯
-//            retry_count = 0; // ÖØÖÃ¼ÆÊýÆ÷ÖØÐÂ¿ªÊ¼
-//            
-//            // ¿ÉÑ¡£ºÔö¼Ó×î´óÖØÊÔ´ÎÊý±ÜÃâÎÞÏÞÑ­»·
+//            LT768_HW_Reset(); // Ó²ï¿½ï¿½ï¿½ï¿½Î»
+//            vTaskDelay(50); // ï¿½ï¿½Î»ï¿½ï¿½È´ï¿½ï¿½ã¹»ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ð¾Æ¬ï¿½ï¿½ï¿½Â³ï¿½Ê¼ï¿½ï¿½
+//            retry_count = 0; // ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¿ï¿½Ê¼
+//
+//            // ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½
 //            if(max_retries < 20) {
 //                max_retries += 5;
 //            }
 //        }
-//        
-//    } while(system_ok == 0 && retry_count < 30); // ¾ø¶Ô×î´óÖØÊÔ´ÎÊý
-//    
-//    // ×îÖÕ×´Ì¬¼ì²é
+//
+//    } while(system_ok == 0 && retry_count < 30); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½
+//
+//    // ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½
 //    if(system_ok == 0) {
-//        // Èç¹û»¹ÊÇÊ§°Ü£¬¿ÉÒÔ¼ÇÂ¼´íÎó»ò²ÉÈ¡ÆäËû´ëÊ©
+//        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê©
 //        Error_Handler();
 //    }
 //}
 
+void LT768_PLL_Initial(void) {
+  unsigned int temp = 0;
+  unsigned int temp1;
 
-void LT768_PLL_Initial(void) 
-{    
-	unsigned int temp = 0;
-	unsigned int temp1;
-	
-	unsigned short lpllOD_sclk, lpllOD_cclk, lpllOD_mclk;
-	unsigned short lpllR_sclk, lpllR_cclk, lpllR_mclk;
-	unsigned short lpllN_sclk, lpllN_cclk, lpllN_mclk;
-	
-	temp = (LCD_HBPD + LCD_HFPD + LCD_HSPW + LCD_XSIZE_TFT) * (LCD_VBPD + LCD_VFPD + LCD_VSPW+LCD_YSIZE_TFT) * 60;   
-	
-	temp1 = (temp%1000000)/100000;
-	if(temp1>5)
-		 temp = temp / 1000000 + 1;
-	else temp = temp / 1000000;
-	
-	SCLK = temp;
-	temp = temp * 3;
-	MCLK = temp;
-	CCLK = temp;
-	
-	if(CCLK > 100)	CCLK = 100;
-	if(MCLK > 100)	MCLK = 100;
-	if(SCLK > 65)	SCLK = 65;
+  unsigned short lpllOD_sclk, lpllOD_cclk, lpllOD_mclk;
+  unsigned short lpllR_sclk, lpllR_cclk, lpllR_mclk;
+  unsigned short lpllN_sclk, lpllN_cclk, lpllN_mclk;
 
-	lpllOD_sclk = 2;
-	lpllOD_cclk = 2;
-	lpllOD_mclk = 2;
-	lpllR_sclk  = 5;
-	lpllR_cclk  = 5;
-	lpllR_mclk  = 5;
-	lpllN_mclk  = MCLK;      
-	lpllN_cclk  = CCLK;    
-	lpllN_sclk  = SCLK;    
-      
-	LCD_CmdWrite(0x05);
-	LCD_DataWrite((lpllOD_sclk<<6) | (lpllR_sclk<<1) | ((lpllN_sclk>>8)&0x1));
-	LCD_CmdWrite(0x07);
-	LCD_DataWrite((lpllOD_mclk<<6) | (lpllR_mclk<<1) | ((lpllN_mclk>>8)&0x1));
-	LCD_CmdWrite(0x09);
-	LCD_DataWrite((lpllOD_cclk<<6) | (lpllR_cclk<<1) | ((lpllN_cclk>>8)&0x1));
+  temp = (LCD_HBPD + LCD_HFPD + LCD_HSPW + LCD_XSIZE_TFT) * (LCD_VBPD + LCD_VFPD + LCD_VSPW + LCD_YSIZE_TFT) * 60;
 
-	LCD_CmdWrite(0x06);
-	LCD_DataWrite(lpllN_sclk);
-	LCD_CmdWrite(0x08);
-	LCD_DataWrite(lpllN_mclk);
-	LCD_CmdWrite(0x0a);
-	LCD_DataWrite(lpllN_cclk);
-      
-	LCD_CmdWrite(0x00);
-	vTaskDelay(1);
-	LCD_DataWrite(0x80);
+  temp1 = (temp % 1000000) / 100000;
+  if (temp1 > 5)
+    temp = temp / 1000000 + 1;
+  else
+    temp = temp / 1000000;
 
-	vTaskDelay(1);	//µ¥PLLÃ­
+  SCLK = temp;
+  temp = temp * 3;
+  MCLK = temp;
+  CCLK = temp;
+
+  if (CCLK > 100)
+    CCLK = 100;
+  if (MCLK > 100)
+    MCLK = 100;
+  if (SCLK > 65)
+    SCLK = 65;
+
+  lpllOD_sclk = 2;
+  lpllOD_cclk = 2;
+  lpllOD_mclk = 2;
+  lpllR_sclk = 5;
+  lpllR_cclk = 5;
+  lpllR_mclk = 5;
+  lpllN_mclk = MCLK;
+  lpllN_cclk = CCLK;
+  lpllN_sclk = SCLK;
+
+  LCD_CmdWrite(0x05);
+  LCD_DataWrite((lpllOD_sclk << 6) | (lpllR_sclk << 1) | ((lpllN_sclk >> 8) & 0x1));
+  LCD_CmdWrite(0x07);
+  LCD_DataWrite((lpllOD_mclk << 6) | (lpllR_mclk << 1) | ((lpllN_mclk >> 8) & 0x1));
+  LCD_CmdWrite(0x09);
+  LCD_DataWrite((lpllOD_cclk << 6) | (lpllR_cclk << 1) | ((lpllN_cclk >> 8) & 0x1));
+
+  LCD_CmdWrite(0x06);
+  LCD_DataWrite(lpllN_sclk);
+  LCD_CmdWrite(0x08);
+  LCD_DataWrite(lpllN_mclk);
+  LCD_CmdWrite(0x0a);
+  LCD_DataWrite(lpllN_cclk);
+
+  LCD_CmdWrite(0x00);
+  vTaskDelay(1);
+  LCD_DataWrite(0x80);
+
+  vTaskDelay(1); // ï¿½ï¿½PLLÃ­
 }
 
+void LT768_SDRAM_initail(unsigned char mclk) {
+  unsigned short sdram_itv;
 
-void LT768_SDRAM_initail(unsigned char mclk)
-{
-	unsigned short sdram_itv;
-	
-	#if 1
-	
-	LCD_RegisterWrite(0xe0,0x29);    
-	//LCD_RegisterWrite(0xe0,0x01);	
-	LCD_RegisterWrite(0xe1,0x03);	//CAS:2=0x02?ACAS:3=0x03
-	sdram_itv = (64000000 / 8192) / (1000/mclk) ;
-	sdram_itv-=2;
+#if 1
 
-//	LCD_RegisterWrite(0xe2,sdram_itv);
-//	LCD_RegisterWrite(0xe3,sdram_itv >>8);
-	LCD_RegisterWrite(0xe2,0x35);
-	LCD_RegisterWrite(0xe3,0x0C);
-	LCD_RegisterWrite(0xe4,0x01);
-	Check_SDRAM_Ready();
-	vTaskDelay(1);
-	
-	#endif 
-	
-	
-	#if 0
+  LCD_RegisterWrite(0xe0, 0x29);
+  // LCD_RegisterWrite(0xe0,0x01);
+  LCD_RegisterWrite(0xe1, 0x03); // CAS:2=0x02?ACAS:3=0x03
+  sdram_itv = (64000000 / 8192) / (1000 / mclk);
+  sdram_itv -= 2;
+
+  //	LCD_RegisterWrite(0xe2,sdram_itv);
+  //	LCD_RegisterWrite(0xe3,sdram_itv >>8);
+  LCD_RegisterWrite(0xe2, 0x35);
+  LCD_RegisterWrite(0xe3, 0x0C);
+  LCD_RegisterWrite(0xe4, 0x01);
+  Check_SDRAM_Ready();
+  vTaskDelay(1);
+
+#endif
+
+#if 0
 	
 	//LCD_RegisterWrite(0xe0,0x29);    
 	LCD_RegisterWrite(0xe0,0x01);	
@@ -238,2385 +226,2577 @@ void LT768_SDRAM_initail(unsigned char mclk)
 	LCD_RegisterWrite(0xe4,0x01);
 	Check_SDRAM_Ready();
 	vTaskDelay(1);
-	
-	#endif 
-	
-	
+
+#endif
 }
 
+void Set_LCD_Panel(void) {
+  //**[01h]**//
+  // TFT_16bit();
+  // TFT_18bit();
+  TFT_24bit();
 
-void Set_LCD_Panel(void)
-{
-	//**[01h]**//   
-	//TFT_16bit();	
-	//TFT_18bit();
-	TFT_24bit(); 
-	
-	#if STM32_FSMC_8
-	Host_Bus_8bit();    //Ö÷»ú×ÜÏß8bit
-	#else
-	Host_Bus_16bit();	//Ö÷»ú×ÜÏß16bit
-	#endif
-      
-	//**[02h]**//
-	//RGB_16b_16bpp();
-	RGB_16b_24bpp_mode1();
-	//RGB_16b_24bpp_mode2();
-	MemWrite_Down_Top_Left_Right();	
-	//MemWrite_Down_Top_Left_Right();
-      
-	//**[03h]**//
-	Graphic_Mode();
-	Memory_Select_SDRAM();
-     
-	PCLK_Falling();	       	//REG[12h]:ÏÂ½µÑØ 
-	//PCLK_Rising();
-	
-	VSCAN_T_to_B();	        //REG[12h]:´ÓÉÏµ½ÏÂ
-	//VSCAN_B_to_T();				//´ÓÏÂµ½ÉÏ
-	HSCAN_L_to_R();
-	
-	PDATA_Set_RGB();        //REG[12h]:Select RGB output
-	//PDATA_Set_RBG();
-	//PDATA_Set_GRB();
-	//PDATA_Set_GBR();
-	//PDATA_Set_BRG();
-	//PDATA_Set_BGR();
+#if STM32_FSMC_8
+  Host_Bus_8bit(); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½8bit
+#else
+  Host_Bus_16bit(); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½16bit
+#endif
 
-	HSYNC_Low_Active();     //REG[13h]:		  
-	//HSYNC_High_Active();
-	
-	VSYNC_Low_Active();     //REG[13h]:			
-	//VSYNC_High_Active();
-	
-	DE_High_Active();       //REG[13h]:	
-	//DE_Low_Active();
- 
-	LCD_HorizontalWidth_VerticalHeight(LCD_XSIZE_TFT ,LCD_YSIZE_TFT);	
-	LCD_Horizontal_Non_Display(LCD_HBPD);	                            
-	LCD_HSYNC_Start_Position(LCD_HFPD);	                              
-	LCD_HSYNC_Pulse_Width(LCD_HSPW);		                            	
-	LCD_Vertical_Non_Display(LCD_VBPD);	                                
-	LCD_VSYNC_Start_Position(LCD_VFPD);	                              
-	LCD_VSYNC_Pulse_Width(LCD_VSPW);		                            	
+  //**[02h]**//
+  // RGB_16b_16bpp();
+  RGB_16b_24bpp_mode1();
+  // RGB_16b_24bpp_mode2();
+  MemWrite_Down_Top_Left_Right();
+  // MemWrite_Down_Top_Left_Right();
 
-	Memory_XY_Mode();	//Block mode (X-Y coordination addressing);¿éÄ£Ê½
-	//Memory_16bpp_Mode();
-	Memory_24bpp_Mode();	
+  //**[03h]**//
+  Graphic_Mode();
+  Memory_Select_SDRAM();
+
+  PCLK_Falling(); // REG[12h]:ï¿½Â½ï¿½ï¿½ï¿½
+  // PCLK_Rising();
+
+  VSCAN_T_to_B(); // REG[12h]:ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½
+  // VSCAN_B_to_T();				//ï¿½ï¿½ï¿½Âµï¿½ï¿½ï¿½
+  HSCAN_L_to_R();
+
+  PDATA_Set_RGB(); // REG[12h]:Select RGB output
+  // PDATA_Set_RBG();
+  // PDATA_Set_GRB();
+  // PDATA_Set_GBR();
+  // PDATA_Set_BRG();
+  // PDATA_Set_BGR();
+
+  HSYNC_Low_Active(); // REG[13h]:
+  // HSYNC_High_Active();
+
+  VSYNC_Low_Active(); // REG[13h]:
+  // VSYNC_High_Active();
+
+  DE_High_Active(); // REG[13h]:
+  // DE_Low_Active();
+
+  LCD_HorizontalWidth_VerticalHeight(LCD_XSIZE_TFT, LCD_YSIZE_TFT);
+  LCD_Horizontal_Non_Display(LCD_HBPD);
+  LCD_HSYNC_Start_Position(LCD_HFPD);
+  LCD_HSYNC_Pulse_Width(LCD_HSPW);
+  LCD_Vertical_Non_Display(LCD_VBPD);
+  LCD_VSYNC_Start_Position(LCD_VFPD);
+  LCD_VSYNC_Pulse_Width(LCD_VSPW);
+
+  Memory_XY_Mode(); // Block mode (X-Y coordination addressing);ï¿½ï¿½Ä£Ê½
+  // Memory_16bpp_Mode();
+  Memory_24bpp_Mode();
 }
 
-
-void LT768_initial(void)
-{
-	LT768_PLL_Initial();
-	LT768_SDRAM_initail(MCLK);
-	Set_LCD_Panel();
+void LT768_initial(void) {
+  LT768_PLL_Initial();
+  LT768_SDRAM_initail(MCLK);
+  Set_LCD_Panel();
 }
-
 
 uint16_t j = 0;
-void LT768_Init(void)
-{
-	vTaskDelay(pdMS_TO_TICKS(200));                    //delay for LT768 power on
-	LT768_HW_Reset();                 //LT768¸´Î»
-//	//test_SPIIO();
-	System_Check_Temp();	          //¼ì²â¸´Î»ÊÇ·ñ³É¹¦
-	vTaskDelay(pdMS_TO_TICKS(100));
-	while(LCD_StatusRead()&0x02) {j++;};	    //Initial_Display_test	and  set SW2 pin2 = 1
-	LT768_initial();
-	
+void LT768_Init(void) {
+  vTaskDelay(pdMS_TO_TICKS(200)); // delay for LT768 power on
+  LT768_HW_Reset();               // LT768ï¿½ï¿½Î»
+  //	//test_SPIIO();
+  System_Check_Temp(); // ï¿½ï¿½â¸´Î»ï¿½Ç·ï¿½É¹ï¿½
+  vTaskDelay(pdMS_TO_TICKS(100));
+  while (LCD_StatusRead() & 0x02) {
+    j++;
+  }; // Initial_Display_test	and  set SW2 pin2 = 1
+  LT768_initial();
 }
-
-
 
 #if 1
 
 //--------------------------------------------------------------------------------------------------------------------------------------------
 
-void MPU8_8bpp_Memory_Write
-(
- unsigned short x           // x×ø±ê
-,unsigned short y           // y×ø±ê
-,unsigned short w           // ¿í¶È
-,unsigned short h           // ¸ß¶È
-,const unsigned char *data  // Êý¾ÝÊ×µØÖ·
+void MPU8_8bpp_Memory_Write(
+    unsigned short x // xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short y // yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short w // ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short h // ï¿½ß¶ï¿½
+    ,
+    const unsigned char* data // ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned short i, j;
+  Graphic_Mode();
+  Active_Window_XY(x, y);
+  Active_Window_WH(w, h);
+  Goto_Pixel_XY(x, y);
+  LCD_CmdWrite(0x04);
+  for (i = 0; i < h; i++) {
+    for (j = 0; j < w; j++) {
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite(*data);
+      data++;
+    }
+  }
+  Check_Mem_WR_FIFO_Empty();
+}
+
+void MPU8_16bpp_Memory_Write(
+    unsigned short x // xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short y // yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short w // ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short h // ï¿½ß¶ï¿½
+    ,
+    const unsigned char* data // ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned short i, j;
+  Graphic_Mode();
+  Active_Window_XY(x, y);
+  Active_Window_WH(w, h);
+  Goto_Pixel_XY(x, y);
+  LCD_CmdWrite(0x04);
+  for (i = 0; i < h; i++) {
+    for (j = 0; j < w; j++) {
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite(*data);
+      data++;
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite(*data);
+      data++;
+    }
+  }
+  Check_Mem_WR_FIFO_Empty();
+}
+
+void MPU8_24bpp_Memory_Write(
+    unsigned short x // xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short y // yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short w // ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short h // ï¿½ß¶ï¿½
+    ,
+    const unsigned char* data // ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
 )
-{														  
-	unsigned short i,j;
-	Graphic_Mode();
-  Active_Window_XY(x,y);
-	Active_Window_WH(w,h); 					
-	Goto_Pixel_XY(x,y);
-	LCD_CmdWrite(0x04);	
-for(i=0;i< h;i++)
-{	
-	for(j=0;j< w;j++)
- 	{	   
-	 Check_Mem_WR_FIFO_not_Full();
-	 LCD_DataWrite(*data);
-	 data++;
-	}
-}
-	Check_Mem_WR_FIFO_Empty();
-}	 
-
-			
-void MPU8_16bpp_Memory_Write
-(
- unsigned short x           // x×ø±ê
-,unsigned short y           // y×ø±ê
-,unsigned short w           // ¿í¶È
-,unsigned short h           // ¸ß¶È
-,const unsigned char *data  // Êý¾ÝÊ×µØÖ·
-)
-{
-	unsigned short i,j;
-	Graphic_Mode();
-    Active_Window_XY(x,y);
-	Active_Window_WH(w,h); 					
-	Goto_Pixel_XY(x,y);
-	LCD_CmdWrite(0x04);
-for(i=0;i< h;i++)
-{	
-	for(j=0;j< w;j++)
- 	{
-	 Check_Mem_WR_FIFO_not_Full();
-	 LCD_DataWrite(*data);
-	 data++;
-	 Check_Mem_WR_FIFO_not_Full();
-	 LCD_DataWrite(*data);
-	 data++;
-	}
-}
-	Check_Mem_WR_FIFO_Empty();
-}		 
-
-
-void MPU8_24bpp_Memory_Write 
-(
- unsigned short x           // x×ø±ê
-,unsigned short y           // y×ø±ê
-,unsigned short w           // ¿í¶È
-,unsigned short h           // ¸ß¶È
-,const unsigned char *data  // Êý¾ÝÊ×µØÖ·
-)
 
 {
-	unsigned short i,j;
-	Graphic_Mode();
-    Active_Window_XY(x,y);
-	Active_Window_WH(w,h); 					
-	Goto_Pixel_XY(x,y);
-	LCD_CmdWrite(0x04);
-for(i=0;i< h;i++)
-{	
-	for(j=0;j< w;j++)
- 	{
-	 Check_Mem_WR_FIFO_not_Full();
-	 LCD_DataWrite(*data);
-	 data++;
-	 Check_Mem_WR_FIFO_not_Full();
-	 LCD_DataWrite(*data);
-	 data++;
-	 Check_Mem_WR_FIFO_not_Full();
-	 LCD_DataWrite(*data);
-	 data++;
-	}
-}
-	Check_Mem_WR_FIFO_Empty();
+  unsigned short i, j;
+  Graphic_Mode();
+  Active_Window_XY(x, y);
+  Active_Window_WH(w, h);
+  Goto_Pixel_XY(x, y);
+  LCD_CmdWrite(0x04);
+  for (i = 0; i < h; i++) {
+    for (j = 0; j < w; j++) {
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite(*data);
+      data++;
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite(*data);
+      data++;
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite(*data);
+      data++;
+    }
+  }
+  Check_Mem_WR_FIFO_Empty();
 }
 
-
-
-void MPU16_16bpp_Memory_Write 
-(
- unsigned short x            // x×ø±ê
-,unsigned short y            // y×ø±ê
-,unsigned short w            // ¿í¶È
-,unsigned short h            // ¸ß¶È
-,const unsigned short *data  // Êý¾ÝÊ×µØÖ·
-)			
-{
-	unsigned short i,j;
-	Graphic_Mode();
-    Active_Window_XY(x,y);
-	Active_Window_WH(w,h); 					
-	Goto_Pixel_XY(x,y);
-	LCD_CmdWrite(0x04);
-for(i=0;i< h;i++)
-{	
-	for(j=0;j< w;j++)
- 	{
-	 Check_Mem_WR_FIFO_not_Full();
-	 LCD_DataWrite(*data);
-	 data++;
-	}
-}
-	Check_Mem_WR_FIFO_Empty();
+void MPU16_16bpp_Memory_Write(
+    unsigned short x // xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short y // yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short w // ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short h // ï¿½ß¶ï¿½
+    ,
+    const unsigned short* data // ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned short i, j;
+  Graphic_Mode();
+  Active_Window_XY(x, y);
+  Active_Window_WH(w, h);
+  Goto_Pixel_XY(x, y);
+  LCD_CmdWrite(0x04);
+  for (i = 0; i < h; i++) {
+    for (j = 0; j < w; j++) {
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite(*data);
+      data++;
+    }
+  }
+  Check_Mem_WR_FIFO_Empty();
 }
 
-
-
-
-void MPU16_24bpp_Mode1_Memory_Write 
-(
- unsigned short x            // x×ø±ê
-,unsigned short y            // y×ø±ê
-,unsigned short w            // ¿í¶È
-,unsigned short h            // ¸ß¶È
-,const unsigned short *data  // Êý¾ÝÊ×µØÖ·
-)	
-{
-	unsigned short i,j;
-	Graphic_Mode();
-    Active_Window_XY(x,y);
-	Active_Window_WH(w,h); 					
-	Goto_Pixel_XY(x,y);
-	LCD_CmdWrite(0x04);
-for(i=0;i< h;i++)
-{	
-	for(j=0;j< w/2;j++)
- 	{
-	 LCD_DataWrite(*data);
-	 Check_Mem_WR_FIFO_not_Full();
-	 data++;
-	 LCD_DataWrite(*data);
-	 Check_Mem_WR_FIFO_not_Full();
-	 data++;
-	 LCD_DataWrite(*data);
-	 Check_Mem_WR_FIFO_not_Full();
-	 data++;
-	}
-}
-	Check_Mem_WR_FIFO_Empty();
+void MPU16_24bpp_Mode1_Memory_Write(
+    unsigned short x // xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short y // yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short w // ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short h // ï¿½ß¶ï¿½
+    ,
+    const unsigned short* data // ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned short i, j;
+  Graphic_Mode();
+  Active_Window_XY(x, y);
+  Active_Window_WH(w, h);
+  Goto_Pixel_XY(x, y);
+  LCD_CmdWrite(0x04);
+  for (i = 0; i < h; i++) {
+    for (j = 0; j < w / 2; j++) {
+      LCD_DataWrite(*data);
+      Check_Mem_WR_FIFO_not_Full();
+      data++;
+      LCD_DataWrite(*data);
+      Check_Mem_WR_FIFO_not_Full();
+      data++;
+      LCD_DataWrite(*data);
+      Check_Mem_WR_FIFO_not_Full();
+      data++;
+    }
+  }
+  Check_Mem_WR_FIFO_Empty();
 }
 
-
-void MPU16_24bpp_Mode2_Memory_Write
-(
- unsigned short x            // x×ø±ê
-,unsigned short y            // y×ø±ê
-,unsigned short w            // ¿í¶È
-,unsigned short h            // ¸ß¶È
-,const unsigned short *data  // Êý¾ÝÊ×µØÖ·
-)	
-{
-	unsigned short i,j;
-	Graphic_Mode();
-    Active_Window_XY(x,y);
-	Active_Window_WH(w,h); 					
-	Goto_Pixel_XY(x,y);
-	LCD_CmdWrite(0x04);
-for(i=0;i< h;i++)
-{	
-	for(j=0;j< w;j++)
- 	{
-	 Check_Mem_WR_FIFO_not_Full();
-	 LCD_DataWrite(*data);
-	 data++;
-	 Check_Mem_WR_FIFO_not_Full();
-	 LCD_DataWrite(*data);
-	 data++;
-	}
+void MPU16_24bpp_Mode2_Memory_Write(
+    unsigned short x // xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short y // yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short w // ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short h // ï¿½ß¶ï¿½
+    ,
+    const unsigned short* data // ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned short i, j;
+  Graphic_Mode();
+  Active_Window_XY(x, y);
+  Active_Window_WH(w, h);
+  Goto_Pixel_XY(x, y);
+  LCD_CmdWrite(0x04);
+  for (i = 0; i < h; i++) {
+    for (j = 0; j < w; j++) {
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite(*data);
+      data++;
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite(*data);
+      data++;
+    }
+  }
+  Check_Mem_WR_FIFO_Empty();
 }
-	Check_Mem_WR_FIFO_Empty();
-}
-
-
-
-
 
 //--------------------------------------------------------------------------------------------------------------------------------------------
 
-
-
-//------------------------------------- Ïß¶Î -----------------------------------------
-void LT768_DrawLine
-(
- unsigned short X1        // X1×ø±ê
-,unsigned short Y1        // Y1×ø±ê
-,unsigned short X2        // X2×ø±ê
-,unsigned short Y2        // Y2×ø±ê
-,unsigned long  LineColor // Ïß¶ÎÑÕÉ«
-)
-{
-	Foreground_color_65k(LineColor);
-	Line_Start_XY(X1,Y1);
-	Line_End_XY(X2,Y2);
-	Start_Line();
-	Check_2D_Busy();
+//------------------------------------- ï¿½ß¶ï¿½ -----------------------------------------
+void LT768_DrawLine(
+    unsigned short X1 // X1ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short X2 // X2ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long LineColor // ï¿½ß¶ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(LineColor);
+  Line_Start_XY(X1, Y1);
+  Line_End_XY(X2, Y2);
+  Start_Line();
+  Check_2D_Busy();
 }
 
-void LT768_DrawLine_Width
-(
- unsigned short X1        // X1×ø±ê
-,unsigned short Y1        // Y1×ø±ê
-,unsigned short X2        // X2×ø±ê
-,unsigned short Y2        // Y2×ø±ê
-,unsigned long  LineColor // Ïß¶ÎÑÕÉ«
-,unsigned short Width     // Ïß¶Î¿í¶È
-)
-{
-	unsigned short  i = 0;
-	signed  short x = 0, y = 0;
-	double temp = 0;
-	x = X2 - X1;
-	y = Y2 - Y1;
-	if(x == 0) temp = 2;
-	else temp = -((double)y/(double)x);
-	if(temp>=-1&&temp<=1)
-		{
-				while(Width--)
-			{
-				LT768_DrawLine(X1,Y1+i,X2,Y2+i,LineColor);
-				i++;
-			}	
-		}
-		
-	else 
-		{
-				while(Width--)
-			{
-				LT768_DrawLine(X1+i,Y1,X2+i,Y2,LineColor);
-				i++;
-			}	
-		}
-}
+void LT768_DrawLine_Width(
+    unsigned short X1 // X1ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short X2 // X2ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long LineColor // ï¿½ß¶ï¿½ï¿½ï¿½É«
+    ,
+    unsigned short Width // ï¿½ß¶Î¿ï¿½ï¿½ï¿½
+) {
+  unsigned short i = 0;
+  signed short x = 0, y = 0;
+  double temp = 0;
+  x = X2 - X1;
+  y = Y2 - Y1;
+  if (x == 0)
+    temp = 2;
+  else
+    temp = -((double)y / (double)x);
+  if (temp >= -1 && temp <= 1) {
+    while (Width--) {
+      LT768_DrawLine(X1, Y1 + i, X2, Y2 + i, LineColor);
+      i++;
+    }
+  }
 
+  else {
+    while (Width--) {
+      LT768_DrawLine(X1 + i, Y1, X2 + i, Y2, LineColor);
+      i++;
+    }
+  }
+}
 
 //------------------------------------- Ô² -----------------------------------------
-void LT768_DrawCircle
-(
- unsigned short XCenter           // Ô²ÐÄXÎ»ÖÃ
-,unsigned short YCenter           // Ô²ÐÄYÎ»ÖÃ
-,unsigned short R                 // °ë¾¶
-,unsigned long CircleColor        // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(CircleColor);
-	Circle_Center_XY(XCenter,YCenter);
-	Circle_Radius_R(R);
-	Start_Circle_or_Ellipse();
-	Check_2D_Busy(); 
+void LT768_DrawCircle(
+    unsigned short XCenter // Ô²ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // Ô²ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short R // ï¿½ë¾¶
+    ,
+    unsigned long CircleColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(CircleColor);
+  Circle_Center_XY(XCenter, YCenter);
+  Circle_Radius_R(R);
+  Start_Circle_or_Ellipse();
+  Check_2D_Busy();
 }
 
-//void LT768_DrawCircle(uint16_t x0, uint16_t y0, uint16_t radius, uint32_t color)
+// void LT768_DrawCircle(uint16_t x0, uint16_t y0, uint16_t radius, uint32_t color)
 //{
-//    // ÉèÖÃ»æÍ¼ÑÕÉ«
-//    LCD_CmdWrite(0x63); // Ç°¾°É«¼Ä´æÆ÷
-//    LCD_DataWrite((color >> 16) & 0xFF);
-//    LCD_CmdWrite(0x64);
-//    LCD_DataWrite((color >> 8) & 0xFF);
-//    LCD_CmdWrite(0x65);
-//    LCD_DataWrite(color & 0xFF);
+//     // ï¿½ï¿½ï¿½Ã»ï¿½Í¼ï¿½ï¿½É«
+//     LCD_CmdWrite(0x63); // Ç°ï¿½ï¿½É«ï¿½Ä´ï¿½ï¿½ï¿½
+//     LCD_DataWrite((color >> 16) & 0xFF);
+//     LCD_CmdWrite(0x64);
+//     LCD_DataWrite((color >> 8) & 0xFF);
+//     LCD_CmdWrite(0x65);
+//     LCD_DataWrite(color & 0xFF);
 
-//    // ÉèÖÃ»æÍ¼ÃüÁîÎª»­Ô²
-//    LCD_CmdWrite(0x68); // »æÍ¼ÃüÁî¼Ä´æÆ÷
-//    LCD_DataWrite(0x04); // »­Ô²ÃüÁî
+//    // ï¿½ï¿½ï¿½Ã»ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Ô²
+//    LCD_CmdWrite(0x68); // ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½
+//    LCD_DataWrite(0x04); // ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½
 
-//    // ÉèÖÃÔ²ÐÄ×ø±êºÍ°ë¾¶
-//    LCD_CmdWrite(0x69); // Ô²ÐÄX×ø±êµÍ8Î»
+//    // ï¿½ï¿½ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í°ë¾¶
+//    LCD_CmdWrite(0x69); // Ô²ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½8Î»
 //    LCD_DataWrite(x0 & 0xFF);
 //    LCD_CmdWrite(0x6A);
 //    LCD_DataWrite((x0 >> 8) & 0xFF);
 
-//    LCD_CmdWrite(0x6B); // Ô²ÐÄY×ø±êµÍ8Î»
+//    LCD_CmdWrite(0x6B); // Ô²ï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½ï¿½8Î»
 //    LCD_DataWrite(y0 & 0xFF);
 //    LCD_CmdWrite(0x6C);
 //    LCD_DataWrite((y0 >> 8) & 0xFF);
 
-//    LCD_CmdWrite(0x6D); // °ë¾¶µÍ8Î»
+//    LCD_CmdWrite(0x6D); // ï¿½ë¾¶ï¿½ï¿½8Î»
 //    LCD_DataWrite(radius & 0xFF);
 //    LCD_CmdWrite(0x6E);
 //    LCD_DataWrite((radius >> 8) & 0xFF);
 
-//    // ´¥·¢»æÍ¼ÃüÁî
-//    LCD_CmdWrite(0x67); // »æÍ¼´¥·¢¼Ä´æÆ÷
-//    LCD_DataWrite(0x01); // ¿ªÊ¼»æÍ¼
+//    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½
+//    LCD_CmdWrite(0x67); // ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½
+//    LCD_DataWrite(0x01); // ï¿½ï¿½Ê¼ï¿½ï¿½Í¼
 
-//    // µÈ´ý»æÍ¼Íê³É
-//    while(LCD_StatusRead() & 0x01); // µÈ´ý»æÍ¼Ã¦½áÊø
+//    // ï¿½È´ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½
+//    while(LCD_StatusRead() & 0x01); // ï¿½È´ï¿½ï¿½ï¿½Í¼Ã¦ï¿½ï¿½ï¿½ï¿½
 //}
 
-
-
-void LT768_DrawCircle_Fill
-(
- unsigned short XCenter           // Ô²ÐÄXÎ»ÖÃ
-,unsigned short YCenter           // Ô²ÐÄYÎ»ÖÃ
-,unsigned short R                 // °ë¾¶
-,unsigned long ForegroundColor    // ±³¾°ÑÕÉ«
-)
-{
-	Foreground_color_16M(ForegroundColor);
-	Circle_Center_XY(XCenter,YCenter);
-	Circle_Radius_R(R);
-	Start_Circle_or_Ellipse_Fill();
-	Check_2D_Busy(); 
-}
-
-
-
-void LT768_DrawCircle_Width
-(
- unsigned short XCenter          // Ô²ÐÄXÎ»ÖÃ
-,unsigned short YCenter          // Ô²ÐÄYÎ»ÖÃ
-,unsigned short R                // °ë¾¶
-,unsigned long CircleColor       // »­ÏßÑÕÉ«
-,unsigned long ForegroundColor   // ±³¾°ÑÕÉ«
-,unsigned short Width            // Ïß¿í
-)
-{
-	LT768_DrawCircle_Fill(XCenter,YCenter,R+Width,CircleColor);
-	LT768_DrawCircle_Fill(XCenter,YCenter,R,ForegroundColor);
-}
-
-
-//------------------------------------- ÍÖÔ² -----------------------------------------
-void LT768_DrawEllipse
-(
- unsigned short XCenter          // ÍÖÔ²ÐÄXÎ»ÖÃ
-,unsigned short YCenter          // ÍÖÔ²ÐÄYÎ»ÖÃ
-,unsigned short X_R              // ¿í°ë¾¶
-,unsigned short Y_R              // ³¤°ë¾¶
-,unsigned long EllipseColor      // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(EllipseColor);
-	Ellipse_Center_XY(XCenter,YCenter);
-  Ellipse_Radius_RxRy(X_R,Y_R);
-  Start_Circle_or_Ellipse();
-  Check_2D_Busy(); 
-}
-
-void LT768_DrawEllipse_Fill
-(
- unsigned short XCenter           // ÍÖÔ²ÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÍÖÔ²ÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long ForegroundColor    // ±³¾°ÑÕÉ«
-)
-{
-	Foreground_color_65k(ForegroundColor);
-	Ellipse_Center_XY(XCenter,YCenter);
-  Ellipse_Radius_RxRy(X_R,Y_R);
-  Start_Circle_or_Ellipse_Fill();
-  Check_2D_Busy(); 
-}
-
-
-void LT768_DrawEllipse_Width
-(
- unsigned short XCenter           // ÍÖÔ²ÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÍÖÔ²ÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long EllipseColor       // »­ÏßÑÕÉ«
-,unsigned long ForegroundColor    // ±³¾°ÑÕÉ«
-,unsigned short Width             // Ïß¿í
-)
-{
-	LT768_DrawEllipse_Fill(XCenter,YCenter,X_R+Width,Y_R+Width,EllipseColor);
-	LT768_DrawEllipse_Fill(XCenter,YCenter,X_R,Y_R,ForegroundColor);
-}
-
-
-
-//------------------------------------- ¾ØÐÎ -----------------------------------------
-void LT768_DrawSquare
-(
- unsigned short X1                // X1Î»ÖÃ
-,unsigned short Y1                // Y1Î»ÖÃ
-,unsigned short X2                // X2Î»ÖÃ
-,unsigned short Y2                // Y2Î»ÖÃ
-,unsigned long SquareColor        // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_16M(SquareColor);
-	Square_Start_XY(X1,Y1);
-	Square_End_XY(X2,Y2);
-	Start_Square();
-	Check_2D_Busy(); 
-}
-
-
-void LT768_DrawSquare_Fill
-(
- unsigned short X1                // X1Î»ÖÃ
-,unsigned short Y1                // Y1Î»ÖÃ
-,unsigned short X2                // X2Î»ÖÃ
-,unsigned short Y2                // Y2Î»ÖÃ
-,unsigned long ForegroundColor    // ±³¾°ÑÕÉ«
-)
-{
-  //Foreground_color_65k(ForegroundColor);
+void LT768_DrawCircle_Fill(
+    unsigned short XCenter // Ô²ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // Ô²ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short R // ï¿½ë¾¶
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
   Foreground_color_16M(ForegroundColor);
-  Square_Start_XY(X1,Y1);
-  Square_End_XY(X2,Y2);
+  Circle_Center_XY(XCenter, YCenter);
+  Circle_Radius_R(R);
+  Start_Circle_or_Ellipse_Fill();
+  Check_2D_Busy();
+}
+
+void LT768_DrawCircle_Width(
+    unsigned short XCenter // Ô²ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // Ô²ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short R // ï¿½ë¾¶
+    ,
+    unsigned long CircleColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned short Width // ï¿½ß¿ï¿½
+) {
+  LT768_DrawCircle_Fill(XCenter, YCenter, R + Width, CircleColor);
+  LT768_DrawCircle_Fill(XCenter, YCenter, R, ForegroundColor);
+}
+
+//------------------------------------- ï¿½ï¿½Ô² -----------------------------------------
+void LT768_DrawEllipse(
+    unsigned short XCenter // ï¿½ï¿½Ô²ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½Ô²ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long EllipseColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(EllipseColor);
+  Ellipse_Center_XY(XCenter, YCenter);
+  Ellipse_Radius_RxRy(X_R, Y_R);
+  Start_Circle_or_Ellipse();
+  Check_2D_Busy();
+}
+
+void LT768_DrawEllipse_Fill(
+    unsigned short XCenter // ï¿½ï¿½Ô²ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½Ô²ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(ForegroundColor);
+  Ellipse_Center_XY(XCenter, YCenter);
+  Ellipse_Radius_RxRy(X_R, Y_R);
+  Start_Circle_or_Ellipse_Fill();
+  Check_2D_Busy();
+}
+
+void LT768_DrawEllipse_Width(
+    unsigned short XCenter // ï¿½ï¿½Ô²ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½Ô²ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long EllipseColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned short Width // ï¿½ß¿ï¿½
+) {
+  LT768_DrawEllipse_Fill(XCenter, YCenter, X_R + Width, Y_R + Width, EllipseColor);
+  LT768_DrawEllipse_Fill(XCenter, YCenter, X_R, Y_R, ForegroundColor);
+}
+
+//------------------------------------- ï¿½ï¿½ï¿½ï¿½ -----------------------------------------
+void LT768_DrawSquare(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned long SquareColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_16M(SquareColor);
+  Square_Start_XY(X1, Y1);
+  Square_End_XY(X2, Y2);
+  Start_Square();
+  Check_2D_Busy();
+}
+
+void LT768_DrawSquare_Fill(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  // Foreground_color_65k(ForegroundColor);
+  Foreground_color_16M(ForegroundColor);
+  Square_Start_XY(X1, Y1);
+  Square_End_XY(X2, Y2);
   Start_Square_Fill();
   Check_2D_Busy();
 }
 
-
-void LT768_DrawSquare_Width
-(
- unsigned short X1                // X1Î»ÖÃ
-,unsigned short Y1                // Y1Î»ÖÃ
-,unsigned short X2                // X2Î»ÖÃ
-,unsigned short Y2                // Y2Î»ÖÃ
-,unsigned long SquareColor        // »­ÏßÑÕÉ«
-,unsigned long ForegroundColor    // ±³¾°ÑÕÉ«
-,unsigned short Width             // Ïß¿í
-)
-{
-	LT768_DrawSquare_Fill(X1-Width,Y1-Width,X2+Width,Y2+Width,SquareColor);
-	LT768_DrawSquare_Fill(X1,Y1,X2,Y2,ForegroundColor);
+void LT768_DrawSquare_Width(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned long SquareColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned short Width // ï¿½ß¿ï¿½
+) {
+  LT768_DrawSquare_Fill(X1 - Width, Y1 - Width, X2 + Width, Y2 + Width, SquareColor);
+  LT768_DrawSquare_Fill(X1, Y1, X2, Y2, ForegroundColor);
 }
 
-
-//------------------------------------- Ô²½Ç¾ØÐÎ -----------------------------------------
-void LT768_DrawCircleSquare
-(
- unsigned short X1                // X1Î»ÖÃ
-,unsigned short Y1                // Y1Î»ÖÃ
-,unsigned short X2                // X2Î»ÖÃ
-,unsigned short Y2                // Y2Î»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long CircleSquareColor  // »­ÏßÑÕÉ«
-)
-{
+//------------------------------------- Ô²ï¿½Ç¾ï¿½ï¿½ï¿½ -----------------------------------------
+void LT768_DrawCircleSquare(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long CircleSquareColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
   Foreground_color_65k(CircleSquareColor);
-  Square_Start_XY(X1,Y1);
-  Square_End_XY(X2,Y2); 
-  Circle_Square_Radius_RxRy(X_R,Y_R);
+  Square_Start_XY(X1, Y1);
+  Square_End_XY(X2, Y2);
+  Circle_Square_Radius_RxRy(X_R, Y_R);
   Start_Circle_Square();
   Check_2D_Busy();
 }
 
-
-
-void LT768_DrawCircleSquare_Fill
-(
- unsigned short X1                // X1Î»ÖÃ
-,unsigned short Y1                // Y1Î»ÖÃ
-,unsigned short X2                // X2Î»ÖÃ
-,unsigned short Y2                // Y2Î»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long ForegroundColor  // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(ForegroundColor);
-  Square_Start_XY(X1,Y1);
-  Square_End_XY(X2,Y2); 
-  Circle_Square_Radius_RxRy(X_R,Y_R);
+void LT768_DrawCircleSquare_Fill(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(ForegroundColor);
+  Square_Start_XY(X1, Y1);
+  Square_End_XY(X2, Y2);
+  Circle_Square_Radius_RxRy(X_R, Y_R);
   Start_Circle_Square_Fill();
-  Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
-
-
-void LT768_DrawCircleSquare_Width
-(
- unsigned short X1                // X1Î»ÖÃ
-,unsigned short Y1                // Y1Î»ÖÃ
-,unsigned short X2                // X2Î»ÖÃ
-,unsigned short Y2                // Y2Î»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long CircleSquareColor  // »­ÏßÑÕÉ«
-,unsigned long ForegroundColor    // »­ÏßÑÕÉ«
-,unsigned short Width             // ¿í¶È
-)
-{
-	LT768_DrawCircleSquare_Fill(X1-Width,Y1-Width,X2+Width,Y2+Width,X_R,Y_R,CircleSquareColor);
-	LT768_DrawCircleSquare_Fill(X1,Y1,X2,Y2,X_R,Y_R,ForegroundColor);
+void LT768_DrawCircleSquare_Width(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long CircleSquareColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned short Width // ï¿½ï¿½ï¿½ï¿½
+) {
+  LT768_DrawCircleSquare_Fill(X1 - Width, Y1 - Width, X2 + Width, Y2 + Width, X_R, Y_R, CircleSquareColor);
+  LT768_DrawCircleSquare_Fill(X1, Y1, X2, Y2, X_R, Y_R, ForegroundColor);
 }
 
-
-//------------------------------------- Èý½ÇÐÎ -----------------------------------------
-void LT768_DrawTriangle
-(
- unsigned short X1              // X1Î»ÖÃ
-,unsigned short Y1              // Y1Î»ÖÃ
-,unsigned short X2              // X2Î»ÖÃ
-,unsigned short Y2              // Y2Î»ÖÃ
-,unsigned short X3              // X3Î»ÖÃ
-,unsigned short Y3              // Y3Î»ÖÃ
-,unsigned long TriangleColor    // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(TriangleColor);
-	Triangle_Point1_XY(X1,Y1);
-  Triangle_Point2_XY(X2,Y2);
-  Triangle_Point3_XY(X3,Y3);
+//------------------------------------- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ -----------------------------------------
+void LT768_DrawTriangle(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned short X3 // X3Î»ï¿½ï¿½
+    ,
+    unsigned short Y3 // Y3Î»ï¿½ï¿½
+    ,
+    unsigned long TriangleColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(TriangleColor);
+  Triangle_Point1_XY(X1, Y1);
+  Triangle_Point2_XY(X2, Y2);
+  Triangle_Point3_XY(X3, Y3);
   Start_Triangle();
-  Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
-
-
-void LT768_DrawTriangle_Fill
-(
- unsigned short X1              // X1Î»ÖÃ
-,unsigned short Y1              // Y1Î»ÖÃ
-,unsigned short X2              // X2Î»ÖÃ
-,unsigned short Y2              // Y2Î»ÖÃ
-,unsigned short X3              // X3Î»ÖÃ
-,unsigned short Y3              // Y3Î»ÖÃ
-,unsigned long ForegroundColor  // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(ForegroundColor);
-	Triangle_Point1_XY(X1,Y1);
-  Triangle_Point2_XY(X2,Y2);
-  Triangle_Point3_XY(X3,Y3);
+void LT768_DrawTriangle_Fill(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned short X3 // X3Î»ï¿½ï¿½
+    ,
+    unsigned short Y3 // Y3Î»ï¿½ï¿½
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(ForegroundColor);
+  Triangle_Point1_XY(X1, Y1);
+  Triangle_Point2_XY(X2, Y2);
+  Triangle_Point3_XY(X3, Y3);
   Start_Triangle_Fill();
   Check_2D_Busy();
 }
 
-void LT768_DrawTriangle_Frame
-(
- unsigned short X1              // X1Î»ÖÃ
-,unsigned short Y1              // Y1Î»ÖÃ
-,unsigned short X2              // X2Î»ÖÃ
-,unsigned short Y2              // Y2Î»ÖÃ
-,unsigned short X3              // X3Î»ÖÃ
-,unsigned short Y3              // Y3Î»ÖÃ
-,unsigned long TriangleColor    // »­ÏßÑÕÉ«
-,unsigned long ForegroundColor  // ±³¾°ÑÕÉ«
-)
-{
-	LT768_DrawTriangle_Fill(X1,Y1,X2,Y2,X3,Y3,ForegroundColor);
-	LT768_DrawTriangle(X1,Y1,X2,Y2,X3,Y3,TriangleColor);
+void LT768_DrawTriangle_Frame(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned short X3 // X3Î»ï¿½ï¿½
+    ,
+    unsigned short Y3 // Y3Î»ï¿½ï¿½
+    ,
+    unsigned long TriangleColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  LT768_DrawTriangle_Fill(X1, Y1, X2, Y2, X3, Y3, ForegroundColor);
+  LT768_DrawTriangle(X1, Y1, X2, Y2, X3, Y3, TriangleColor);
 }
 
-
-
-//------------------------------------- ÇúÏß -----------------------------------------
-void LT768_DrawLeftUpCurve
-( 
- unsigned short XCenter           // ÇúÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÇúÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long CurveColor         // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(CurveColor);
-  Ellipse_Center_XY(XCenter,YCenter);
-  Ellipse_Radius_RxRy(X_R,Y_R);
+//------------------------------------- ï¿½ï¿½ï¿½ï¿½ -----------------------------------------
+void LT768_DrawLeftUpCurve(
+    unsigned short XCenter // ï¿½ï¿½ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long CurveColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(CurveColor);
+  Ellipse_Center_XY(XCenter, YCenter);
+  Ellipse_Radius_RxRy(X_R, Y_R);
   Start_Left_Up_Curve();
-  Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
-
-void LT768_DrawLeftDownCurve
-(
- unsigned short XCenter           // ÇúÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÇúÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long CurveColor         // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(CurveColor);
-  Ellipse_Center_XY(XCenter,YCenter);
-  Ellipse_Radius_RxRy(X_R,Y_R);
+void LT768_DrawLeftDownCurve(
+    unsigned short XCenter // ï¿½ï¿½ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long CurveColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(CurveColor);
+  Ellipse_Center_XY(XCenter, YCenter);
+  Ellipse_Radius_RxRy(X_R, Y_R);
   Start_Left_Down_Curve();
-  Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
-
-void LT768_DrawRightUpCurve
-(
- unsigned short XCenter           // ÇúÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÇúÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long CurveColor         // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(CurveColor);
-  Ellipse_Center_XY(XCenter,YCenter);
-  Ellipse_Radius_RxRy(X_R,Y_R);
+void LT768_DrawRightUpCurve(
+    unsigned short XCenter // ï¿½ï¿½ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long CurveColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(CurveColor);
+  Ellipse_Center_XY(XCenter, YCenter);
+  Ellipse_Radius_RxRy(X_R, Y_R);
   Start_Right_Up_Curve();
-  Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
-
-void LT768_DrawRightDownCurve
-(
- unsigned short XCenter           // ÇúÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÇúÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long CurveColor         // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(CurveColor);
-  Ellipse_Center_XY(XCenter,YCenter);
-  Ellipse_Radius_RxRy(X_R,Y_R);
+void LT768_DrawRightDownCurve(
+    unsigned short XCenter // ï¿½ï¿½ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long CurveColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(CurveColor);
+  Ellipse_Center_XY(XCenter, YCenter);
+  Ellipse_Radius_RxRy(X_R, Y_R);
   Start_Right_Down_Curve();
-  Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
-
-void LT768_SelectDrawCurve
-(
- unsigned short XCenter           // ÇúÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÇúÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long CurveColor         // »­ÏßÑÕÉ«
-,unsigned short  Dir              // ·½Ïò
-)
-{
-	switch(Dir)
-	{
-		case 0:LT768_DrawLeftDownCurve(XCenter,YCenter,X_R,Y_R,CurveColor);		break;
-		case 1:LT768_DrawLeftUpCurve(XCenter,YCenter,X_R,Y_R,CurveColor);			break;
-		case 2:LT768_DrawRightUpCurve(XCenter,YCenter,X_R,Y_R,CurveColor);		break;
-		case 3:LT768_DrawRightDownCurve(XCenter,YCenter,X_R,Y_R,CurveColor);	break;
-		default:																															break;
-	}
+void LT768_SelectDrawCurve(
+    unsigned short XCenter // ï¿½ï¿½ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long CurveColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned short Dir // ï¿½ï¿½ï¿½ï¿½
+) {
+  switch (Dir) {
+  case 0:
+    LT768_DrawLeftDownCurve(XCenter, YCenter, X_R, Y_R, CurveColor);
+    break;
+  case 1:
+    LT768_DrawLeftUpCurve(XCenter, YCenter, X_R, Y_R, CurveColor);
+    break;
+  case 2:
+    LT768_DrawRightUpCurve(XCenter, YCenter, X_R, Y_R, CurveColor);
+    break;
+  case 3:
+    LT768_DrawRightDownCurve(XCenter, YCenter, X_R, Y_R, CurveColor);
+    break;
+  default:
+    break;
+  }
 }
 
-
-//------------------------------------- 1/4ÊµÐÄÍÖÔ² -----------------------------------------
-void LT768_DrawLeftUpCurve_Fill
-(
- unsigned short XCenter           // ÇúÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÇúÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long ForegroundColor    // ±³¾°ÑÕÉ«
-)
-{
+//------------------------------------- 1/4Êµï¿½ï¿½ï¿½ï¿½Ô² -----------------------------------------
+void LT768_DrawLeftUpCurve_Fill(
+    unsigned short XCenter // ï¿½ï¿½ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
   Foreground_color_65k(ForegroundColor);
-  Ellipse_Center_XY(XCenter,YCenter);
-  Ellipse_Radius_RxRy(X_R,Y_R);
+  Ellipse_Center_XY(XCenter, YCenter);
+  Ellipse_Radius_RxRy(X_R, Y_R);
   Start_Left_Up_Curve_Fill();
-  Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
-
-void LT768_DrawLeftDownCurve_Fill
-(
- unsigned short XCenter           // ÇúÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÇúÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long ForegroundColor    // ±³¾°ÑÕÉ«
-)
-{
+void LT768_DrawLeftDownCurve_Fill(
+    unsigned short XCenter // ï¿½ï¿½ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
   Foreground_color_65k(ForegroundColor);
-  Ellipse_Center_XY(XCenter,YCenter);
-  Ellipse_Radius_RxRy(X_R,Y_R);
+  Ellipse_Center_XY(XCenter, YCenter);
+  Ellipse_Radius_RxRy(X_R, Y_R);
   Start_Left_Down_Curve_Fill();
-  Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
-
-void LT768_DrawRightUpCurve_Fill
-(
- unsigned short XCenter           // ÇúÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÇúÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long ForegroundColor    // ±³¾°ÑÕÉ«
-)
-{
+void LT768_DrawRightUpCurve_Fill(
+    unsigned short XCenter // ï¿½ï¿½ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
   Foreground_color_65k(ForegroundColor);
-  Ellipse_Center_XY(XCenter,YCenter);
-  Ellipse_Radius_RxRy(X_R,Y_R);
+  Ellipse_Center_XY(XCenter, YCenter);
+  Ellipse_Radius_RxRy(X_R, Y_R);
   Start_Right_Up_Curve_Fill();
-  Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
-
-void LT768_DrawRightDownCurve_Fill
-(
- unsigned short XCenter           // ÇúÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÇúÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long ForegroundColor    // ±³¾°ÑÕÉ«
-)
-{
+void LT768_DrawRightDownCurve_Fill(
+    unsigned short XCenter // ï¿½ï¿½ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
   Foreground_color_65k(ForegroundColor);
-  Ellipse_Center_XY(XCenter,YCenter);
-  Ellipse_Radius_RxRy(X_R,Y_R);
+  Ellipse_Center_XY(XCenter, YCenter);
+  Ellipse_Radius_RxRy(X_R, Y_R);
   Start_Right_Down_Curve_Fill();
-  Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
-
-void LT768_SelectDrawCurve_Fill
-(
- unsigned short XCenter           // ÇúÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÇúÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned long CurveColor         // »­ÏßÑÕÉ«
-,unsigned short  Dir              // ·½Ïò
-)
-{
-	switch(Dir)
-	{
-		case 0:LT768_DrawLeftDownCurve_Fill(XCenter,YCenter,X_R,Y_R,CurveColor);		break;
-		case 1:LT768_DrawLeftUpCurve_Fill(XCenter,YCenter,X_R,Y_R,CurveColor);			break;
-		case 2:LT768_DrawRightUpCurve_Fill(XCenter,YCenter,X_R,Y_R,CurveColor);			break;
-		case 3:LT768_DrawRightDownCurve_Fill(XCenter,YCenter,X_R,Y_R,CurveColor);		break;
-		default:																																		break;
-	}
+void LT768_SelectDrawCurve_Fill(
+    unsigned short XCenter // ï¿½ï¿½ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned long CurveColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned short Dir // ï¿½ï¿½ï¿½ï¿½
+) {
+  switch (Dir) {
+  case 0:
+    LT768_DrawLeftDownCurve_Fill(XCenter, YCenter, X_R, Y_R, CurveColor);
+    break;
+  case 1:
+    LT768_DrawLeftUpCurve_Fill(XCenter, YCenter, X_R, Y_R, CurveColor);
+    break;
+  case 2:
+    LT768_DrawRightUpCurve_Fill(XCenter, YCenter, X_R, Y_R, CurveColor);
+    break;
+  case 3:
+    LT768_DrawRightDownCurve_Fill(XCenter, YCenter, X_R, Y_R, CurveColor);
+    break;
+  default:
+    break;
+  }
 }
 
+//------------------------------------- ï¿½Ä±ï¿½ï¿½ï¿½ -----------------------------------------
 
+void LT768_DrawQuadrilateral(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned short X3 // X3Î»ï¿½ï¿½
+    ,
+    unsigned short Y3 // Y3Î»ï¿½ï¿½
+    ,
+    unsigned short X4 // X4Î»ï¿½ï¿½
+    ,
+    unsigned short Y4 // Y4Î»ï¿½ï¿½
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(ForegroundColor);
+  Triangle_Point1_XY(X1, Y1);
+  Triangle_Point2_XY(X2, Y2);
+  Triangle_Point3_XY(X3, Y3);
+  Ellipse_Radius_RxRy(X4, Y4);
 
-//------------------------------------- ËÄ±ßÐÎ -----------------------------------------
+  LCD_CmdWrite(0x67);
+  LCD_DataWrite(0x8d);
+  Check_Busy_Draw();
 
-void LT768_DrawQuadrilateral
-(
- unsigned short X1              // X1Î»ÖÃ
-,unsigned short Y1              // Y1Î»ÖÃ
-,unsigned short X2              // X2Î»ÖÃ
-,unsigned short Y2              // Y2Î»ÖÃ
-,unsigned short X3              // X3Î»ÖÃ
-,unsigned short Y3              // Y3Î»ÖÃ
-,unsigned short X4              // X4Î»ÖÃ
-,unsigned short Y4              // Y4Î»ÖÃ
-,unsigned long ForegroundColor  // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(ForegroundColor);
-	Triangle_Point1_XY(X1,Y1);
-  Triangle_Point2_XY(X2,Y2);
-  Triangle_Point3_XY(X3,Y3);
-	Ellipse_Radius_RxRy(X4,Y4);
-	
-	LCD_CmdWrite(0x67);
-	LCD_DataWrite(0x8d);
-	Check_Busy_Draw();
-	
-	Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
+void LT768_DrawQuadrilateral_Fill(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned short X3 // X3Î»ï¿½ï¿½
+    ,
+    unsigned short Y3 // Y3Î»ï¿½ï¿½
+    ,
+    unsigned short X4 // X4Î»ï¿½ï¿½
+    ,
+    unsigned short Y4 // Y4Î»ï¿½ï¿½
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(ForegroundColor);
+  Triangle_Point1_XY(X1, Y1);
+  Triangle_Point2_XY(X2, Y2);
+  Triangle_Point3_XY(X3, Y3);
+  Ellipse_Radius_RxRy(X4, Y4);
 
-void LT768_DrawQuadrilateral_Fill
-(
- unsigned short X1              // X1Î»ÖÃ
-,unsigned short Y1              // Y1Î»ÖÃ
-,unsigned short X2              // X2Î»ÖÃ
-,unsigned short Y2              // Y2Î»ÖÃ
-,unsigned short X3              // X3Î»ÖÃ
-,unsigned short Y3              // Y3Î»ÖÃ
-,unsigned short X4              // X4Î»ÖÃ
-,unsigned short Y4              // Y4Î»ÖÃ
-,unsigned long ForegroundColor  // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(ForegroundColor);
-	Triangle_Point1_XY(X1,Y1);
-  Triangle_Point2_XY(X2,Y2);
-  Triangle_Point3_XY(X3,Y3);
-	Ellipse_Radius_RxRy(X4,Y4);
-	
-	LCD_CmdWrite(0x67);
-	LCD_DataWrite(0xa7);
-	Check_Busy_Draw();
-	
-	Check_2D_Busy(); 
+  LCD_CmdWrite(0x67);
+  LCD_DataWrite(0xa7);
+  Check_Busy_Draw();
+
+  Check_2D_Busy();
 }
 
+//------------------------------------- ï¿½ï¿½ï¿½ï¿½ï¿½ -----------------------------------------
 
+void LT768_DrawPentagon(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned short X3 // X3Î»ï¿½ï¿½
+    ,
+    unsigned short Y3 // Y3Î»ï¿½ï¿½
+    ,
+    unsigned short X4 // X4Î»ï¿½ï¿½
+    ,
+    unsigned short Y4 // Y4Î»ï¿½ï¿½
+    ,
+    unsigned short X5 // X5Î»ï¿½ï¿½
+    ,
+    unsigned short Y5 // Y5Î»ï¿½ï¿½
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(ForegroundColor);
+  Triangle_Point1_XY(X1, Y1);
+  Triangle_Point2_XY(X2, Y2);
+  Triangle_Point3_XY(X3, Y3);
+  Ellipse_Radius_RxRy(X4, Y4);
+  Ellipse_Center_XY(X5, Y5);
 
-//------------------------------------- Îå±ßÐÎ -----------------------------------------
+  LCD_CmdWrite(0x67);
+  LCD_DataWrite(0x8F);
+  Check_Busy_Draw();
 
-void LT768_DrawPentagon
-(
- unsigned short X1              // X1Î»ÖÃ
-,unsigned short Y1              // Y1Î»ÖÃ
-,unsigned short X2              // X2Î»ÖÃ
-,unsigned short Y2              // Y2Î»ÖÃ
-,unsigned short X3              // X3Î»ÖÃ
-,unsigned short Y3              // Y3Î»ÖÃ
-,unsigned short X4              // X4Î»ÖÃ
-,unsigned short Y4              // Y4Î»ÖÃ
-,unsigned short X5              // X5Î»ÖÃ
-,unsigned short Y5              // Y5Î»ÖÃ
-,unsigned long ForegroundColor  // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(ForegroundColor);
-	Triangle_Point1_XY(X1,Y1);
-  Triangle_Point2_XY(X2,Y2);
-  Triangle_Point3_XY(X3,Y3);
-	Ellipse_Radius_RxRy(X4,Y4);
-	Ellipse_Center_XY(X5,Y5);
-	
-	LCD_CmdWrite(0x67);
-	LCD_DataWrite(0x8F);
-	Check_Busy_Draw();
-	
-	Check_2D_Busy(); 
+  Check_2D_Busy();
 }
 
+void LT768_DrawPentagon_Fill(
+    unsigned short X1 // X1Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // Y1Î»ï¿½ï¿½
+    ,
+    unsigned short X2 // X2Î»ï¿½ï¿½
+    ,
+    unsigned short Y2 // Y2Î»ï¿½ï¿½
+    ,
+    unsigned short X3 // X3Î»ï¿½ï¿½
+    ,
+    unsigned short Y3 // Y3Î»ï¿½ï¿½
+    ,
+    unsigned short X4 // X4Î»ï¿½ï¿½
+    ,
+    unsigned short Y4 // Y4Î»ï¿½ï¿½
+    ,
+    unsigned short X5 // X5Î»ï¿½ï¿½
+    ,
+    unsigned short Y5 // Y5Î»ï¿½ï¿½
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  Foreground_color_65k(ForegroundColor);
+  Triangle_Point1_XY(X1, Y1);
+  Triangle_Point2_XY(X2, Y2);
+  Triangle_Point3_XY(X3, Y3);
+  Ellipse_Radius_RxRy(X4, Y4);
+  Ellipse_Center_XY(X5, Y5);
 
-void LT768_DrawPentagon_Fill
-(
- unsigned short X1              // X1Î»ÖÃ
-,unsigned short Y1              // Y1Î»ÖÃ
-,unsigned short X2              // X2Î»ÖÃ
-,unsigned short Y2              // Y2Î»ÖÃ
-,unsigned short X3              // X3Î»ÖÃ
-,unsigned short Y3              // Y3Î»ÖÃ
-,unsigned short X4              // X4Î»ÖÃ
-,unsigned short Y4              // Y4Î»ÖÃ
-,unsigned short X5              // X5Î»ÖÃ
-,unsigned short Y5              // Y5Î»ÖÃ
-,unsigned long ForegroundColor  // »­ÏßÑÕÉ«
-)
-{
-	Foreground_color_65k(ForegroundColor);
-	Triangle_Point1_XY(X1,Y1);
-  Triangle_Point2_XY(X2,Y2);
-  Triangle_Point3_XY(X3,Y3);
-	Ellipse_Radius_RxRy(X4,Y4);
-	Ellipse_Center_XY(X5,Y5);
-	
-	LCD_CmdWrite(0x67);
-	LCD_DataWrite(0xa9);
-	Check_Busy_Draw();
-	
-	Check_2D_Busy(); 
+  LCD_CmdWrite(0x67);
+  LCD_DataWrite(0xa9);
+  Check_Busy_Draw();
+
+  Check_2D_Busy();
 }
 
+//------------------------------------- Ô²ï¿½ï¿½ -----------------------------------------
+unsigned char LT768_DrawCylinder(
+    unsigned short XCenter // ï¿½ï¿½Ô²ï¿½ï¿½XÎ»ï¿½ï¿½
+    ,
+    unsigned short YCenter // ï¿½ï¿½Ô²ï¿½ï¿½YÎ»ï¿½ï¿½
+    ,
+    unsigned short X_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short Y_R // ï¿½ï¿½ï¿½ë¾¶
+    ,
+    unsigned short H // ï¿½ß¶ï¿½
+    ,
+    unsigned long CylinderColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  if (YCenter < H)
+    return 1;
 
-//------------------------------------- Ô²Öù -----------------------------------------
-unsigned char LT768_DrawCylinder
-(
- unsigned short XCenter           // ÍÖÔ²ÐÄXÎ»ÖÃ
-,unsigned short YCenter           // ÍÖÔ²ÐÄYÎ»ÖÃ
-,unsigned short X_R               // ¿í°ë¾¶
-,unsigned short Y_R               // ³¤°ë¾¶
-,unsigned short H                 // ¸ß¶È
-,unsigned long CylinderColor      // »­ÏßÑÕÉ«
-,unsigned long ForegroundColor    // ±³¾°ÑÕÉ«
-)
-{
-	if(YCenter < H)	return 1;
-	
-	//µ×ÃæÍÖÔ²
-	LT768_DrawEllipse_Fill(XCenter,YCenter,X_R,Y_R,ForegroundColor);
-	LT768_DrawEllipse(XCenter,YCenter,X_R,Y_R,CylinderColor);
-	
-	//ÖÐ¼ä¾ØÐÎ
-	LT768_DrawSquare_Fill(XCenter-X_R,YCenter-H,XCenter+X_R,YCenter,ForegroundColor);
-	
-	//¶¥ÃæÍÖÔ²
-	LT768_DrawEllipse_Fill(XCenter,YCenter-H,X_R,Y_R,ForegroundColor);
-	LT768_DrawEllipse(XCenter,YCenter-H,X_R,Y_R,CylinderColor);
-	
-	LT768_DrawLine(XCenter-X_R,YCenter,XCenter-X_R,YCenter-H,CylinderColor);
-	LT768_DrawLine(XCenter+X_R,YCenter,XCenter+X_R,YCenter-H,CylinderColor);
-	
-	return 0;
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²
+  LT768_DrawEllipse_Fill(XCenter, YCenter, X_R, Y_R, ForegroundColor);
+  LT768_DrawEllipse(XCenter, YCenter, X_R, Y_R, CylinderColor);
+
+  // ï¿½Ð¼ï¿½ï¿½ï¿½ï¿½
+  LT768_DrawSquare_Fill(XCenter - X_R, YCenter - H, XCenter + X_R, YCenter, ForegroundColor);
+
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²
+  LT768_DrawEllipse_Fill(XCenter, YCenter - H, X_R, Y_R, ForegroundColor);
+  LT768_DrawEllipse(XCenter, YCenter - H, X_R, Y_R, CylinderColor);
+
+  LT768_DrawLine(XCenter - X_R, YCenter, XCenter - X_R, YCenter - H, CylinderColor);
+  LT768_DrawLine(XCenter + X_R, YCenter, XCenter + X_R, YCenter - H, CylinderColor);
+
+  return 0;
 }
 
+//------------------------------------- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ -----------------------------------------
+void LT768_DrawQuadrangular(
+    unsigned short X1, unsigned short Y1, unsigned short X2, unsigned short Y2, unsigned short X3, unsigned short Y3, unsigned short X4, unsigned short Y4, unsigned short X5, unsigned short Y5, unsigned short X6, unsigned short Y6, unsigned long QuadrangularColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned long ForegroundColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+) {
+  LT768_DrawSquare_Fill(X1, Y1, X5, Y5, ForegroundColor);
+  LT768_DrawSquare(X1, Y1, X5, Y5, QuadrangularColor);
 
-//------------------------------------- ËÄÀâÖù -----------------------------------------
-void LT768_DrawQuadrangular
-(
- unsigned short X1
-,unsigned short Y1
-,unsigned short X2
-,unsigned short Y2
-,unsigned short X3
-,unsigned short Y3
-,unsigned short X4
-,unsigned short Y4
-,unsigned short X5
-,unsigned short Y5
-,unsigned short X6
-,unsigned short Y6
-,unsigned long QuadrangularColor   // »­ÏßÑÕÉ«
-,unsigned long ForegroundColor     // ±³¾°ÑÕÉ«
-)
-{
-	LT768_DrawSquare_Fill(X1,Y1,X5,Y5,ForegroundColor);
-	LT768_DrawSquare(X1,Y1,X5,Y5,QuadrangularColor);
-	
-	LT768_DrawQuadrilateral_Fill(X1,Y1,X2,Y2,X3,Y3,X4,Y4,ForegroundColor);
-	LT768_DrawQuadrilateral(X1,Y1,X2,Y2,X3,Y3,X4,Y4,QuadrangularColor);
-	
-	LT768_DrawQuadrilateral_Fill(X3,Y3,X4,Y4,X5,Y5,X6,Y6,ForegroundColor);
-	LT768_DrawQuadrilateral(X3,Y3,X4,Y4,X5,Y5,X6,Y6,QuadrangularColor);
+  LT768_DrawQuadrilateral_Fill(X1, Y1, X2, Y2, X3, Y3, X4, Y4, ForegroundColor);
+  LT768_DrawQuadrilateral(X1, Y1, X2, Y2, X3, Y3, X4, Y4, QuadrangularColor);
+
+  LT768_DrawQuadrilateral_Fill(X3, Y3, X4, Y4, X5, Y5, X6, Y6, ForegroundColor);
+  LT768_DrawQuadrilateral(X3, Y3, X4, Y4, X5, Y5, X6, Y6, QuadrangularColor);
 }
 
+//----------------------------------------------------------------------ï¿½ï¿½ï¿½ï¿½-------------------------------------------------------------------
+void LT768_MakeTable(
+    unsigned short X1,             // ï¿½ï¿½Ê¼Î»ï¿½ï¿½X1
+    unsigned short Y1,             // ï¿½ï¿½Ê¼Î»ï¿½ï¿½X2
+    unsigned short W,              // ï¿½ï¿½ï¿½ï¿½
+    unsigned short H,              // ï¿½ß¶ï¿½
+    unsigned short Line,           // ï¿½ï¿½ï¿½ï¿½
+    unsigned short Row,            // ï¿½ï¿½ï¿½ï¿½
+    unsigned long TableColor,      // ï¿½ß¿ï¿½ï¿½ï¿½É«C1
+    unsigned long ItemColor,       // ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«C2
+    unsigned long ForegroundColor, // ï¿½Ú²ï¿½ï¿½ï¿½ï¿½Ú±ï¿½ï¿½ï¿½É«C3
+    unsigned short width1,         // ï¿½Ú¿ï¿½ï¿½ï¿½ï¿½
+    unsigned short width2,         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    unsigned char mode             // 0ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½   1ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+) {
+  unsigned short i = 0;
+  unsigned short x2, y2;
+  x2 = X1 + W * Row;
+  y2 = Y1 + H * Line;
 
-//----------------------------------------------------------------------±í¸ñ-------------------------------------------------------------------
-void LT768_MakeTable
-(
-	unsigned short X1,                  // ÆðÊ¼Î»ÖÃX1
-	unsigned short Y1,                  // ÆðÊ¼Î»ÖÃX2
-	unsigned short W,                   // ¿í¶È
-	unsigned short H,                   // ¸ß¶È
-	unsigned short Line,                // ÐÐÊý
-	unsigned short Row,                 // ÁÐÊý
-	unsigned long  TableColor,          // Ïß¿òÑÕÉ«C1
-	unsigned long  ItemColor,  					// ÏîÄ¿À¹±³¾°É«C2
-	unsigned long  ForegroundColor,     // ÄÚ²¿´°¿Ú±³¾°É«C3
-	unsigned short width1,              // ÄÚ¿ò¿í¶È
-	unsigned short width2,              // Íâ¿ò¿í¶È
-	unsigned char  mode                 // 0£ºÏîÄ¿À¸×ÝÏò   1£ºÏîÄ¿À¸ºáÏò 
-)
-{
-	unsigned short i = 0;
-	unsigned short x2,y2;
-	x2 = X1 + W * Row;
-	y2 = Y1 + H * Line;
-	
-	LT768_DrawSquare_Width(X1,Y1,x2,y2,TableColor,ForegroundColor,width2);  
-	
-	if(mode == 0)	      LT768_DrawSquare_Fill(X1,Y1,X1+W,y2,ItemColor);  
-	else if(mode == 1)	LT768_DrawSquare_Fill(X1,Y1,x2,Y1+H,ItemColor); 
-	
-	for(i = 0 ; i < Line ; i++)
-	{
-		LT768_DrawLine_Width(X1,Y1+i*H,x2,Y1+i*H,TableColor,width1);
-	}
-	
-	for(i = 0 ; i < Row ; i++)
-	{
-		LT768_DrawLine_Width(X1+i*W,Y1,X1+i*W,y2,TableColor,width1);
-	}
+  LT768_DrawSquare_Width(X1, Y1, x2, y2, TableColor, ForegroundColor, width2);
+
+  if (mode == 0)
+    LT768_DrawSquare_Fill(X1, Y1, X1 + W, y2, ItemColor);
+  else if (mode == 1)
+    LT768_DrawSquare_Fill(X1, Y1, x2, Y1 + H, ItemColor);
+
+  for (i = 0; i < Line; i++) {
+    LT768_DrawLine_Width(X1, Y1 + i * H, x2, Y1 + i * H, TableColor, width1);
+  }
+
+  for (i = 0; i < Row; i++) {
+    LT768_DrawLine_Width(X1 + i * W, Y1, X1 + i * W, y2, TableColor, width1);
+  }
 }
-
-
-
 
 //--------------------------------------------------------------------------------------------------------------------------------------------
 
-
-void LT768_Color_Bar_ON(void)
-{
-	Color_Bar_ON();
+void LT768_Color_Bar_ON(void) {
+  Color_Bar_ON();
 }
 
-void LT768_Color_Bar_OFF(void)
-{
-	Color_Bar_OFF();
+void LT768_Color_Bar_OFF(void) {
+  Color_Bar_OFF();
 }
-
-
-
-
-
 
 //--------------------------------------------------------------------------------------------------------------------------------------------
 
+void LT768_DMA_24bit_Linear(
+    unsigned char SCS // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI   : SCSï¿½ï¿½0       SCSï¿½ï¿½1
+    ,
+    unsigned char Clk // SPIÊ±ï¿½Ó·ï¿½Æµï¿½ï¿½ï¿½ï¿½ : SPI Clock = System Clock /{(Clk+1)*2}
+    ,
+    unsigned long flash_addr // Òªï¿½ï¿½flashï¿½ï¿½È¡ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned long memory_addr // ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½äµ½SDRAMï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned long data_num // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+) {
 
+  Enable_SFlash_SPI(); // Ê¹ï¿½ï¿½SPIï¿½ï¿½ï¿½ï¿½
+  if (SCS == 0)
+    Select_SFI_0(); // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI0
+  if (SCS == 1)
+    Select_SFI_1(); // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI1
 
-void LT768_DMA_24bit_Linear
-(
- unsigned char SCS              // Ñ¡ÔñÍâ¹ÒµÄSPI   : SCS£º0       SCS£º1
-,unsigned char Clk              // SPIÊ±ÖÓ·ÖÆµ²ÎÊý : SPI Clock = System Clock /{(Clk+1)*2}
-,unsigned long flash_addr       // Òª´Óflash¶ÁÈ¡Êý¾ÝµÄÆðÊ¼µØÖ·   
-,unsigned long memory_addr      // Êý¾ÝÒª´«Êäµ½SDRAMµÄÆðÊ¼µØÖ·
-,unsigned long data_num         // ´«ÊäµÄÊý¾ÝÁ¿
-)
-{
-	
-	Enable_SFlash_SPI();									             // Ê¹ÄÜSPI¹¦ÄÜ
-  if(SCS == 0)		Select_SFI_0();										 // Ñ¡ÔñÍâ¹ÒµÄSPI0
-  if(SCS == 1)		Select_SFI_1();										 // Ñ¡ÔñÍâ¹ÒµÄSPI1
-	
-	Memory_Linear_Mode();
-	Select_SFI_DMA_Mode();								             // ÉèÖÃSPIµÄDMAÄ£Ê½
-	
-	SPI_Clock_Period(Clk);                             // SPIËÙÂÊ 
-	SFI_DMA_Destination_Start_Address(memory_addr);  	 // Ö¸¶¨µÄÄÚ´æµÄ¿ªÊ¼µØÖ·
-	SFI_DMA_Transfer_Number(data_num);                 // DMA´«ÊäµÄÊýÁ¿
-	SFI_DMA_Source_Start_Address(flash_addr);          // flashµØÖ·
-	Check_Busy_SFI_DMA(); 
-	Start_SFI_DMA();
-	Check_Busy_SFI_DMA();
-	Memory_XY_Mode();
+  Memory_Linear_Mode();
+  Select_SFI_DMA_Mode(); // ï¿½ï¿½ï¿½ï¿½SPIï¿½ï¿½DMAÄ£Ê½
+
+  SPI_Clock_Period(Clk);                          // SPIï¿½ï¿½ï¿½ï¿½
+  SFI_DMA_Destination_Start_Address(memory_addr); // Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½Ä¿ï¿½Ê¼ï¿½ï¿½Ö·
+  SFI_DMA_Transfer_Number(data_num);              // DMAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+  SFI_DMA_Source_Start_Address(flash_addr);       // flashï¿½ï¿½Ö·
+  Check_Busy_SFI_DMA();
+  Start_SFI_DMA();
+  Check_Busy_SFI_DMA();
+  Memory_XY_Mode();
 }
 
+void LT768_DMA_32bit_Linear(
+    unsigned char SCS // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI   : SCSï¿½ï¿½0       SCSï¿½ï¿½1
+    ,
+    unsigned char Clk // SPIÊ±ï¿½Ó·ï¿½Æµï¿½ï¿½ï¿½ï¿½ : SPI Clock = System Clock /{(Clk+1)*2}
+    ,
+    unsigned long flash_addr // Òªï¿½ï¿½flashï¿½ï¿½È¡ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned long memory_addr // ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½äµ½SDRAMï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned long data_num // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+) {
+  Enable_SFlash_SPI(); // Ê¹ï¿½ï¿½SPIï¿½ï¿½ï¿½ï¿½
+  if (SCS == 0)
+    Select_SFI_0(); // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI0
+  if (SCS == 1)
+    Select_SFI_1(); // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI1
 
+  Memory_Linear_Mode();
+  Select_SFI_DMA_Mode(); // ï¿½ï¿½ï¿½ï¿½SPIï¿½ï¿½DMAÄ£Ê½
+  Select_SFI_32bit_Address();
 
-void LT768_DMA_32bit_Linear
-(
- unsigned char SCS              // Ñ¡ÔñÍâ¹ÒµÄSPI   : SCS£º0       SCS£º1
-,unsigned char Clk              // SPIÊ±ÖÓ·ÖÆµ²ÎÊý : SPI Clock = System Clock /{(Clk+1)*2}
-,unsigned long flash_addr       // Òª´Óflash¶ÁÈ¡Êý¾ÝµÄÆðÊ¼µØÖ·   
-,unsigned long memory_addr      // Êý¾ÝÒª´«Êäµ½SDRAMµÄÆðÊ¼µØÖ·
-,unsigned long data_num         // ´«ÊäµÄÊý¾ÝÁ¿
-)
-{
-	Enable_SFlash_SPI();									             // Ê¹ÄÜSPI¹¦ÄÜ
-  if(SCS == 0)		Select_SFI_0();								     // Ñ¡ÔñÍâ¹ÒµÄSPI0
-  if(SCS == 1)		Select_SFI_1();										 // Ñ¡ÔñÍâ¹ÒµÄSPI1
-	
-	Memory_Linear_Mode();
-	Select_SFI_DMA_Mode();								            // ÉèÖÃSPIµÄDMAÄ£Ê½
-	Select_SFI_32bit_Address();
-	
-	SPI_Clock_Period(Clk);                             // SPIËÙÂÊ 
-	SFI_DMA_Destination_Start_Address(memory_addr);  	 // Ö¸¶¨µÄÄÚ´æµÄ¿ªÊ¼µØÖ·
-	SFI_DMA_Transfer_Number(data_num);                 // DMA´«ÊäµÄÊýÁ¿
-	SFI_DMA_Source_Start_Address(flash_addr);          // flashµØÖ·
-	Check_Busy_SFI_DMA(); 
-	Start_SFI_DMA();
-	Check_Busy_SFI_DMA();
-	Memory_XY_Mode();
+  SPI_Clock_Period(Clk);                          // SPIï¿½ï¿½ï¿½ï¿½
+  SFI_DMA_Destination_Start_Address(memory_addr); // Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½Ä¿ï¿½Ê¼ï¿½ï¿½Ö·
+  SFI_DMA_Transfer_Number(data_num);              // DMAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+  SFI_DMA_Source_Start_Address(flash_addr);       // flashï¿½ï¿½Ö·
+  Check_Busy_SFI_DMA();
+  Start_SFI_DMA();
+  Check_Busy_SFI_DMA();
+  Memory_XY_Mode();
 }
 
+void LT768_DMA_24bit_Block(
+    unsigned char SCS // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI   : SCSï¿½ï¿½0       SCSï¿½ï¿½1
+    ,
+    unsigned char Clk // SPIÊ±ï¿½Ó·ï¿½Æµï¿½ï¿½ï¿½ï¿½ : SPI Clock = System Clock /{(Clk+1)*2}
+    ,
+    unsigned short X1 // ï¿½ï¿½ï¿½äµ½ï¿½Ú´ï¿½X1ï¿½ï¿½Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // ï¿½ï¿½ï¿½äµ½ï¿½Ú´ï¿½Y1ï¿½ï¿½Î»ï¿½ï¿½
+    ,
+    unsigned short X_W // DMAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // DMAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄ¸ß¶ï¿½
+    ,
+    unsigned short P_W // Í¼Æ¬ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned long Addr // Flashï¿½Äµï¿½Ö·
+) {
 
+  Enable_SFlash_SPI(); // Ê¹ï¿½ï¿½SPIï¿½ï¿½ï¿½ï¿½
+  if (SCS == 0)
+    Select_SFI_0(); // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI0
+  if (SCS == 1)
+    Select_SFI_1(); // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI1
 
-void LT768_DMA_24bit_Block
-(
- unsigned char SCS         // Ñ¡ÔñÍâ¹ÒµÄSPI   : SCS£º0       SCS£º1
-,unsigned char Clk         // SPIÊ±ÖÓ·ÖÆµ²ÎÊý : SPI Clock = System Clock /{(Clk+1)*2}
-,unsigned short X1         // ´«Êäµ½ÄÚ´æX1µÄÎ»ÖÃ
-,unsigned short Y1         // ´«Êäµ½ÄÚ´æY1µÄÎ»ÖÃ
-,unsigned short X_W        // DMA´«ÊäÊý¾ÝµÄ¿í¶È
-,unsigned short Y_H        // DMA´«ÊäÊý¾ÝµÄ¸ß¶È
-,unsigned short P_W        // Í¼Æ¬µÄ¿í¶È
-,unsigned long Addr        // FlashµÄµØÖ·
-)
-{  
+  Select_SFI_DMA_Mode(); // ï¿½ï¿½ï¿½ï¿½SPIï¿½ï¿½DMAÄ£Ê½
+  SPI_Clock_Period(Clk); // ï¿½ï¿½ï¿½ï¿½SPIï¿½Ä·ï¿½ÆµÏµï¿½ï¿½
 
-  Enable_SFlash_SPI();									          // Ê¹ÄÜSPI¹¦ÄÜ
-  if(SCS == 0)	Select_SFI_0();										// Ñ¡ÔñÍâ¹ÒµÄSPI0
-  if(SCS == 1)	Select_SFI_1();									  // Ñ¡ÔñÍâ¹ÒµÄSPI1
- 
-										   
-  Select_SFI_DMA_Mode();								          // ÉèÖÃSPIµÄDMAÄ£Ê½
-  SPI_Clock_Period(Clk);                          // ÉèÖÃSPIµÄ·ÖÆµÏµÊý
+  Goto_Pixel_XY(X1, Y1);                         // ï¿½ï¿½Í¼ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½Î»ï¿½ï¿½
+  SFI_DMA_Destination_Upper_Left_Corner(X1, Y1); // DMAï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ÄµØ£ï¿½ï¿½Ú´ï¿½ï¿½Î»ï¿½Ã£ï¿½
+  SFI_DMA_Transfer_Width_Height(X_W, Y_H);       // ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ÝµÄ¿ï¿½ï¿½ÈºÍ¸ß¶ï¿½
+  SFI_DMA_Source_Width(P_W);                     // ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ÝµÄ¿ï¿½ï¿½ï¿½
+  SFI_DMA_Source_Start_Address(Addr);            // ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Flashï¿½Äµï¿½Ö·
 
-  Goto_Pixel_XY(X1,Y1);									          // ÔÚÍ¼ÐÎÄ£Ê½ÖÐÉèÖÃÄÚ´æµÄÎ»ÖÃ
-  SFI_DMA_Destination_Upper_Left_Corner(X1,Y1);		// DMA´«ÊäµÄÄ¿µÄµØ£¨ÄÚ´æµÄÎ»ÖÃ£©
-  SFI_DMA_Transfer_Width_Height(X_W,Y_H);				  // ÉèÖÃ¿éÊý¾ÝµÄ¿í¶ÈºÍ¸ß¶È
-  SFI_DMA_Source_Width(P_W);							        // ÉèÖÃÔ´Êý¾ÝµÄ¿í¶È
-  SFI_DMA_Source_Start_Address(Addr); 					  // ÉèÖÃÔ´Êý¾ÝÔÚFlashµÄµØÖ·
-
-  Start_SFI_DMA();									              // ¿ªÊ¼DMA´«Êä
-  Check_Busy_SFI_DMA();								            // ¼ì²âDMAÊÇ·ñ´«ÊäÍê³É
+  Start_SFI_DMA();      // ï¿½ï¿½Ê¼DMAï¿½ï¿½ï¿½ï¿½
+  Check_Busy_SFI_DMA(); // ï¿½ï¿½ï¿½DMAï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 }
 
+void LT768_DMA_32bit_Block(
+    unsigned char SCS // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI   : SCSï¿½ï¿½0       SCSï¿½ï¿½1
+    ,
+    unsigned char Clk // SPIÊ±ï¿½Ó·ï¿½Æµï¿½ï¿½ï¿½ï¿½ : SPI Clock = System Clock /{(Clk+1)*2}
+    ,
+    unsigned short X1 // ï¿½Ú´ï¿½X1ï¿½ï¿½Î»ï¿½ï¿½
+    ,
+    unsigned short Y1 // ï¿½Ú´ï¿½Y1ï¿½ï¿½Î»ï¿½ï¿½
+    ,
+    unsigned short X_W // DMAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // DMAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄ¸ß¶ï¿½
+    ,
+    unsigned short P_W // Í¼Æ¬ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned long Addr // Flashï¿½Äµï¿½Ö·
+) {
 
+  Enable_SFlash_SPI();
+  if (SCS == 0)
+    Select_SFI_0();
+  if (SCS == 1)
+    Select_SFI_1();
 
-void LT768_DMA_32bit_Block
-(
- unsigned char SCS         // Ñ¡ÔñÍâ¹ÒµÄSPI   : SCS£º0       SCS£º1
-,unsigned char Clk         // SPIÊ±ÖÓ·ÖÆµ²ÎÊý : SPI Clock = System Clock /{(Clk+1)*2}
-,unsigned short X1         // ÄÚ´æX1µÄÎ»ÖÃ
-,unsigned short Y1         // ÄÚ´æY1µÄÎ»ÖÃ
-,unsigned short X_W        // DMA´«ÊäÊý¾ÝµÄ¿í¶È
-,unsigned short Y_H        // DMA´«ÊäÊý¾ÝµÄ¸ß¶È
-,unsigned short P_W        // Í¼Æ¬µÄ¿í¶È
-,unsigned long Addr        // FlashµÄµØÖ·
-)
-{  
-
-  Enable_SFlash_SPI();									
-  if(SCS == 0)	Select_SFI_0();										       
-  if(SCS == 1)	Select_SFI_1();										      
-   
-  Select_SFI_DMA_Mode();								  
+  Select_SFI_DMA_Mode();
   SPI_Clock_Period(Clk);
 
-  Select_SFI_32bit_Address();							  
+  Select_SFI_32bit_Address();
 
-  Goto_Pixel_XY(X1,Y1);									  
-  SFI_DMA_Destination_Upper_Left_Corner(X1,Y1);			
-  SFI_DMA_Transfer_Width_Height(X_W,Y_H);				  
-  SFI_DMA_Source_Width(P_W);							  
-  SFI_DMA_Source_Start_Address(Addr); 						 
+  Goto_Pixel_XY(X1, Y1);
+  SFI_DMA_Destination_Upper_Left_Corner(X1, Y1);
+  SFI_DMA_Transfer_Width_Height(X_W, Y_H);
+  SFI_DMA_Source_Width(P_W);
+  SFI_DMA_Source_Start_Address(Addr);
 
-  Start_SFI_DMA();									  
-  Check_Busy_SFI_DMA();								 
+  Start_SFI_DMA();
+  Check_Busy_SFI_DMA();
   Select_SFI_24bit_Address();
 }
 
-
-
-
-
-
 //--------------------------------------------------------------------------------------------------------------------------------------------
-/* Ñ¡ÔñÄÚ²¿¼¯³É×Ö¿â³õÊ¼»¯ */
-void LT768_Select_Internal_Font_Init
-(
- unsigned char Size         // ÉèÖÃ×ÖÌå´óÐ¡  16£º16*16     24:24*24    32:32*32
-,unsigned char XxN          // ×ÖÌåµÄ¿í¶È·Å´ó±¶Êý£º1~4
-,unsigned char YxN          // ×ÖÌåµÄ¸ß¶È·Å´ó±¶Êý£º1~4
-,unsigned char ChromaKey    // 0£º×ÖÌå±³¾°É«Í¸Ã÷    1£º¿ÉÒÔÉèÖÃ×ÖÌåµÄ±³¾°É«
-,unsigned char Alignment    // 0£º²»×ÖÌå²»¶ÔÆë      1£º×ÖÌå¶ÔÆë
-)
-{
-	if(Size==16)	Font_Select_8x16_16x16();
-	if(Size==24)	Font_Select_12x24_24x24();
-	if(Size==32)	Font_Select_16x32_32x32();
+/* Ñ¡ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¿ï¿½ï¿½Ê¼ï¿½ï¿½ */
+void LT768_Select_Internal_Font_Init(
+    unsigned char Size // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡  16ï¿½ï¿½16*16     24:24*24    32:32*32
+    ,
+    unsigned char XxN // ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½È·Å´ï¿½ï¿½ï¿½ï¿½ï¿½1~4
+    ,
+    unsigned char YxN // ï¿½ï¿½ï¿½ï¿½Ä¸ß¶È·Å´ï¿½ï¿½ï¿½ï¿½ï¿½1~4
+    ,
+    unsigned char ChromaKey // 0ï¿½ï¿½ï¿½ï¿½ï¿½å±³ï¿½ï¿½É«Í¸ï¿½ï¿½    1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½É«
+    ,
+    unsigned char Alignment // 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½å²»ï¿½ï¿½ï¿½ï¿½      1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+) {
+  if (Size == 16)
+    Font_Select_8x16_16x16();
+  if (Size == 24)
+    Font_Select_12x24_24x24();
+  if (Size == 32)
+    Font_Select_16x32_32x32();
 
-	//(*)
-	if(XxN==1)	Font_Width_X1();
-	if(XxN==2)	Font_Width_X2();
-	if(XxN==3)	Font_Width_X3();
-	if(XxN==4)	Font_Width_X4();
+  //(*)
+  if (XxN == 1)
+    Font_Width_X1();
+  if (XxN == 2)
+    Font_Width_X2();
+  if (XxN == 3)
+    Font_Width_X3();
+  if (XxN == 4)
+    Font_Width_X4();
 
-	//(*)	
-	if(YxN==1)	Font_Height_X1();
-	if(YxN==2)	Font_Height_X2();
-	if(YxN==3)	Font_Height_X3();
-	if(YxN==4)	Font_Height_X4();
+  //(*)
+  if (YxN == 1)
+    Font_Height_X1();
+  if (YxN == 2)
+    Font_Height_X2();
+  if (YxN == 3)
+    Font_Height_X3();
+  if (YxN == 4)
+    Font_Height_X4();
 
-	//(*)
-	if(ChromaKey==0)	Font_Background_select_Color();	
-	if(ChromaKey==1)	Font_Background_select_Transparency();	
+  //(*)
+  if (ChromaKey == 0)
+    Font_Background_select_Color();
+  if (ChromaKey == 1)
+    Font_Background_select_Transparency();
 
-	//(*)
-	if(Alignment==0)	Disable_Font_Alignment();
-	if(Alignment==1)	Enable_Font_Alignment();
+  //(*)
+  if (Alignment == 0)
+    Disable_Font_Alignment();
+  if (Alignment == 1)
+    Enable_Font_Alignment();
 }
 
-
-/* ÏÔÊ¾ÄÚ²¿¼¯³É×ÖÌå */
-void LT768_Print_Internal_Font_String
-(
- unsigned short x               // ×ÖÌå¿ªÊ¼ÏÔÊ¾µÄxÎ»ÖÃ
-,unsigned short y               // ×ÖÌå¿ªÊ¼ÏÔÊ¾µÄyÎ»ÖÃ
-,unsigned long FontColor        // ×ÖÌåµÄÑÕÉ«
-,unsigned long BackGroundColor  // ×ÖÌåµÄ±³¾°É«£¨×¢Òâ£ºµ±×ÖÌå±³¾°³õÊ¼»¯³ÉÍ¸Ã÷Ê±£¬ÉèÖÃ¸ÃÖµÎÞÐ§£©
-,char *c                        // Êý¾Ý»º³åµÄÊ×µØÖ·
-)
-{
-	Text_Mode();
-	CGROM_Select_Internal_CGROM();
-	//Foreground_color_65k(FontColor);
-	//Background_color_65k(BackGroundColor);
-	Foreground_color_16M(FontColor);
-	Background_color_16M(BackGroundColor);
-	Goto_Text_XY(x,y);
-	Show_String(c);
+/* ï¿½ï¿½Ê¾ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
+void LT768_Print_Internal_Font_String(
+    unsigned short x // ï¿½ï¿½ï¿½å¿ªÊ¼ï¿½ï¿½Ê¾ï¿½ï¿½xÎ»ï¿½ï¿½
+    ,
+    unsigned short y // ï¿½ï¿½ï¿½å¿ªÊ¼ï¿½ï¿½Ê¾ï¿½ï¿½yÎ»ï¿½ï¿½
+    ,
+    unsigned long FontColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned long BackGroundColor // ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½É«ï¿½ï¿½×¢ï¿½â£ºï¿½ï¿½ï¿½ï¿½ï¿½å±³ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ã¸ï¿½Öµï¿½ï¿½Ð§ï¿½ï¿½
+    ,
+    char* c // ï¿½ï¿½ï¿½Ý»ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  Text_Mode();
+  CGROM_Select_Internal_CGROM();
+  // Foreground_color_65k(FontColor);
+  // Background_color_65k(BackGroundColor);
+  Foreground_color_16M(FontColor);
+  Background_color_16M(BackGroundColor);
+  Goto_Text_XY(x, y);
+  Show_String(c);
 }
 
+/* Ñ¡ï¿½ï¿½ï¿½â²¿ï¿½ï¿½ï¿½ï¿½ï¿½Ö¿ï¿½ï¿½Ê¼ï¿½ï¿½ */
+void LT768_Select_Outside_Font_Init(
+    unsigned char SCS // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI   : SCSï¿½ï¿½0       SCSï¿½ï¿½1
+    ,
+    unsigned char Clk // SPIÊ±ï¿½Ó·ï¿½Æµï¿½ï¿½ï¿½ï¿½ : SPI Clock = System Clock /{(Clk+1)*2}
+    ,
+    unsigned long FlashAddr // Ô´ï¿½ï¿½Ö·(Flash)
+    ,
+    unsigned long MemoryAddr // Ä¿ï¿½Äµï¿½Ö·(SDRAM)
+    ,
+    unsigned long Num // ï¿½Ö¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡
+    ,
+    unsigned char Size // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡  16ï¿½ï¿½16*16     24:24*24    32:32*32
+    ,
+    unsigned char XxN // ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½È·Å´ï¿½ï¿½ï¿½ï¿½ï¿½1~4
+    ,
+    unsigned char YxN // ï¿½ï¿½ï¿½ï¿½Ä¸ß¶È·Å´ï¿½ï¿½ï¿½ï¿½ï¿½1~4
+    ,
+    unsigned char ChromaKey // 0ï¿½ï¿½ï¿½ï¿½ï¿½å±³ï¿½ï¿½É«Í¸ï¿½ï¿½    1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½É«
+    ,
+    unsigned char Alignment // 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½å²»ï¿½ï¿½ï¿½ï¿½      1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+) {
+  if (Size == 16)
+    Font_Select_8x16_16x16();
+  if (Size == 24)
+    Font_Select_12x24_24x24();
+  if (Size == 32)
+    Font_Select_16x32_32x32();
 
-/* Ñ¡ÔñÍâ²¿¼¯³É×Ö¿â³õÊ¼»¯ */
-void LT768_Select_Outside_Font_Init
-(
- unsigned char SCS           // Ñ¡ÔñÍâ¹ÒµÄSPI   : SCS£º0       SCS£º1
-,unsigned char Clk           // SPIÊ±ÖÓ·ÖÆµ²ÎÊý : SPI Clock = System Clock /{(Clk+1)*2}
-,unsigned long FlashAddr     // Ô´µØÖ·(Flash)
-,unsigned long MemoryAddr    // Ä¿µÄµØÖ·(SDRAM)
-,unsigned long Num           // ×Ö¿âµÄÊý¾ÝÁ¿´óÐ¡
-,unsigned char Size          // ÉèÖÃ×ÖÌå´óÐ¡  16£º16*16     24:24*24    32:32*32
-,unsigned char XxN           // ×ÖÌåµÄ¿í¶È·Å´ó±¶Êý£º1~4
-,unsigned char YxN           // ×ÖÌåµÄ¸ß¶È·Å´ó±¶Êý£º1~4
-,unsigned char ChromaKey     // 0£º×ÖÌå±³¾°É«Í¸Ã÷    1£º¿ÉÒÔÉèÖÃ×ÖÌåµÄ±³¾°É«
-,unsigned char Alignment     // 0£º²»×ÖÌå²»¶ÔÆë      1£º×ÖÌå¶ÔÆë
-)
-{
-	if(Size==16)	Font_Select_8x16_16x16();
-	if(Size==24)	Font_Select_12x24_24x24();
-	if(Size==32)	Font_Select_16x32_32x32();
+  //(*)
+  if (XxN == 1)
+    Font_Width_X1();
+  if (XxN == 2)
+    Font_Width_X2();
+  if (XxN == 3)
+    Font_Width_X3();
+  if (XxN == 4)
+    Font_Width_X4();
 
-	//(*)
-	if(XxN==1)	Font_Width_X1();
-	if(XxN==2)	Font_Width_X2();
-	if(XxN==3)	Font_Width_X3();
-	if(XxN==4)	Font_Width_X4();
+  //(*)
+  if (YxN == 1)
+    Font_Height_X1();
+  if (YxN == 2)
+    Font_Height_X2();
+  if (YxN == 3)
+    Font_Height_X3();
+  if (YxN == 4)
+    Font_Height_X4();
 
-	//(*)	
-	if(YxN==1)	Font_Height_X1();
-	if(YxN==2)	Font_Height_X2();
-	if(YxN==3)	Font_Height_X3();
-	if(YxN==4)	Font_Height_X4();
+  //(*)
+  if (ChromaKey == 0)
+    Font_Background_select_Color();
+  if (ChromaKey == 1)
+    Font_Background_select_Transparency();
 
-	//(*)
-	if(ChromaKey==0)	Font_Background_select_Color();	
-	if(ChromaKey==1)	Font_Background_select_Transparency();	
+  //(*)
+  if (Alignment == 0)
+    Disable_Font_Alignment();
+  if (Alignment == 1)
+    Enable_Font_Alignment();
 
-	//(*)
-	if(Alignment==0)	Disable_Font_Alignment();
-	if(Alignment==1)	Enable_Font_Alignment();	
-	
-	LT768_DMA_24bit_Linear(SCS,Clk,FlashAddr,MemoryAddr,Num);
-	CGRAM_Start_address(MemoryAddr);        
+  LT768_DMA_24bit_Linear(SCS, Clk, FlashAddr, MemoryAddr, Num);
+  CGRAM_Start_address(MemoryAddr);
 }
 
-/* ÏÔÊ¾Íâ²¿¼°ÄÚ²¿¼¯³É×ÖÌå */
-void LT768_Print_Outside_Font_String
-(
- unsigned short x               // ×ÖÌå¿ªÊ¼ÏÔÊ¾µÄxÎ»ÖÃ
-,unsigned short y               // ×ÖÌå¿ªÊ¼ÏÔÊ¾µÄyÎ»ÖÃ
-,unsigned long FontColor        // ×ÖÌåµÄÑÕÉ«
-,unsigned long BackGroundColor  // ×ÖÌåµÄ±³¾°É«£¨×¢Òâ£ºµ±×ÖÌå±³¾°³õÊ¼»¯³ÉÍ¸Ã÷Ê±£¬ÉèÖÃ¸ÃÖµÎÞÐ§£©
-,unsigned char *c               // Êý¾Ý»º³åµÄÊ×µØÖ·
-)
-{
-	unsigned short temp_H = 0;
-	unsigned short temp_L = 0;
-	unsigned short temp = 0;
-	unsigned long i = 0;
-	
-	Text_Mode();
-	Font_Select_UserDefine_Mode();
+/* ï¿½ï¿½Ê¾ï¿½â²¿ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
+void LT768_Print_Outside_Font_String(
+    unsigned short x // ï¿½ï¿½ï¿½å¿ªÊ¼ï¿½ï¿½Ê¾ï¿½ï¿½xÎ»ï¿½ï¿½
+    ,
+    unsigned short y // ï¿½ï¿½ï¿½å¿ªÊ¼ï¿½ï¿½Ê¾ï¿½ï¿½yÎ»ï¿½ï¿½
+    ,
+    unsigned long FontColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned long BackGroundColor // ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½É«ï¿½ï¿½×¢ï¿½â£ºï¿½ï¿½ï¿½ï¿½ï¿½å±³ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ã¸ï¿½Öµï¿½ï¿½Ð§ï¿½ï¿½
+    ,
+    unsigned char* c // ï¿½ï¿½ï¿½Ý»ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned short temp_H = 0;
+  unsigned short temp_L = 0;
+  unsigned short temp = 0;
+  unsigned long i = 0;
+
+  Text_Mode();
+  Font_Select_UserDefine_Mode();
   Foreground_color_65k(FontColor);
-	Background_color_65k(BackGroundColor);
-	Goto_Text_XY(x,y);
-	
-	while(c[i] != '\0')
-  { 
-		if(c[i] < 0xa1)
-		{
-			CGROM_Select_Internal_CGROM();   // ÄÚ²¿CGROMÎª×Ö·ûÀ´Ô´
-			LCD_CmdWrite(0x04);
-			LCD_DataWrite(c[i]);
-			Check_Mem_WR_FIFO_not_Full();  
-			i += 1;
-		}
-		else
-		{
-			Font_Select_UserDefine_Mode();   // ×Ô¶¨Òå×Ö¿â
-			LCD_CmdWrite(0x04);
-			temp_H = ((c[i] - 0xa1) & 0x00ff) * 94;
-			temp_L = c[i+1] - 0xa1;
-			temp = temp_H + temp_L + 0x8000;
-			LCD_DataWrite((temp>>8)&0xff);
-			Check_Mem_WR_FIFO_not_Full();
-			LCD_DataWrite(temp&0xff);
-			Check_Mem_WR_FIFO_not_Full();
-			i += 2;		
-		}
-	}
-	
+  Background_color_65k(BackGroundColor);
+  Goto_Text_XY(x, y);
+
+  while (c[i] != '\0') {
+    if (c[i] < 0xa1) {
+      CGROM_Select_Internal_CGROM(); // ï¿½Ú²ï¿½CGROMÎªï¿½Ö·ï¿½ï¿½ï¿½Ô´
+      LCD_CmdWrite(0x04);
+      LCD_DataWrite(c[i]);
+      Check_Mem_WR_FIFO_not_Full();
+      i += 1;
+    } else {
+      Font_Select_UserDefine_Mode(); // ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½Ö¿ï¿½
+      LCD_CmdWrite(0x04);
+      temp_H = ((c[i] - 0xa1) & 0x00ff) * 94;
+      temp_L = c[i + 1] - 0xa1;
+      temp = temp_H + temp_L + 0x8000;
+      LCD_DataWrite((temp >> 8) & 0xff);
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite(temp & 0xff);
+      Check_Mem_WR_FIFO_not_Full();
+      i += 2;
+    }
+  }
+
   Check_2D_Busy();
 
-  Graphic_Mode(); //back to graphic mode;Í¼ÐÎÄ£Ê½
+  Graphic_Mode(); // back to graphic mode;Í¼ï¿½ï¿½Ä£Ê½
 }
 
-/*ÏÔÊ¾48*48¡¢72*72×ÖÌå*/
-void LT768_BTE_Memory_Copy_ColorExpansion_8
-(
- unsigned long S0_Addr             // SOÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short YS0                // S0Í¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned long Des_Addr            // Ä¿µÄÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short Des_W              // Ä¿µÄÍ¼ÏñµÄ¿í¶È
-,unsigned short XDes               // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê(ÏÔÊ¾´°¿ÚµÄÆðÊ¼x×ø±ê)
-,unsigned short YDes               // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½Y×ø±ê(ÏÔÊ¾´°¿ÚµÄÆðÊ¼y×ø±ê)
-,unsigned short X_W                // ÏÔÊ¾´°¿ÚµÄ¿í¶È
-,unsigned short Y_H                // ÏÔÊ¾´°¿ÚµÄ³¤¶È
-,unsigned long Foreground_color
-,unsigned long Background_color
-)
-{
-	Foreground_color_256(Foreground_color);
-	Background_color_256(Background_color);
-	BTE_ROP_Code(7);
-	
-	BTE_S0_Color_8bpp();
-	BTE_S0_Memory_Start_Address(S0_Addr);
-	BTE_S0_Image_Width(Des_W);
-	BTE_S0_Window_Start_XY(0,YS0);	
+/*ï¿½ï¿½Ê¾48*48ï¿½ï¿½72*72ï¿½ï¿½ï¿½ï¿½*/
+void LT768_BTE_Memory_Copy_ColorExpansion_8(
+    unsigned long S0_Addr // SOÍ¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short YS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long Des_Addr // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½Ê¼xï¿½ï¿½ï¿½ï¿½)
+    ,
+    unsigned short YDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½Ê¼yï¿½ï¿½ï¿½ï¿½)
+    ,
+    unsigned short X_W // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+    ,
+    unsigned long Foreground_color, unsigned long Background_color) {
+  Foreground_color_256(Foreground_color);
+  Background_color_256(Background_color);
+  BTE_ROP_Code(7);
 
-	BTE_Destination_Color_16bpp();
-	BTE_Destination_Memory_Start_Address(Des_Addr);
-	BTE_Destination_Image_Width(Des_W);
-	BTE_Destination_Window_Start_XY(XDes,YDes);
-   
-	BTE_Operation_Code(0x0e);	//BTE Operation: Memory copy (move) with chroma keying (w/o ROP)
-	BTE_Window_Size(X_W,Y_H); 
-	BTE_Enable();
-	Check_BTE_Busy();
-}
+  BTE_S0_Color_8bpp();
+  BTE_S0_Memory_Start_Address(S0_Addr);
+  BTE_S0_Image_Width(Des_W);
+  BTE_S0_Window_Start_XY(0, YS0);
 
-void LT768_BTE_Memory_Copy_ColorExpansion_Chroma_key_8
-(
- unsigned long S0_Addr             // SOÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short YS0                // S0Í¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned long Des_Addr            // Ä¿µÄÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short Des_W              // Ä¿µÄÍ¼ÏñµÄ¿í¶È
-,unsigned short XDes               // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê(ÏÔÊ¾´°¿ÚµÄÆðÊ¼x×ø±ê)
-,unsigned short YDes               // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½Y×ø±ê(ÏÔÊ¾´°¿ÚµÄÆðÊ¼y×ø±ê)
-,unsigned short X_W                // ÏÔÊ¾´°¿ÚµÄ¿í¶È
-,unsigned short Y_H                // ÏÔÊ¾´°¿ÚµÄ³¤¶È
-,unsigned long Foreground_color
-)
-{
-	Foreground_color_256(Foreground_color);
-	BTE_ROP_Code(7);
-	
-	BTE_S0_Color_8bpp();
-	BTE_S0_Memory_Start_Address(S0_Addr);
-	BTE_S0_Image_Width(Des_W);
-	BTE_S0_Window_Start_XY(0,YS0);	
-
-	BTE_Destination_Color_16bpp();
-	BTE_Destination_Memory_Start_Address(Des_Addr);
-	BTE_Destination_Image_Width(Des_W);
-	BTE_Destination_Window_Start_XY(XDes,YDes);
-   
-	BTE_Operation_Code(0x0f);	//BTE Operation: Memory copy (move) with chroma keying (w/o ROP)
-	BTE_Window_Size(X_W,Y_H); 
-	BTE_Enable();
-	Check_BTE_Busy();
-}
-
-void LT768_Print_Outside_Font_GB2312_48_72
-(
- unsigned char SCS           		// Ñ¡ÔñÍâ¹ÒµÄSPI   : SCS£º0       SCS£º1
-,unsigned char Clk           		// SPIÊ±ÖÓ·ÖÆµ²ÎÊý : SPI Clock = System Clock /{(Clk+1)*2}
-,unsigned long FlashAddr     		// ×Ö¿âÔ´µØÖ·(Flash)
-,unsigned long MemoryAddr    		// Ä¿µÄµØÖ·(SDRAM)
-,unsigned long ShowAddr             // ÏÔÊ¾²ãµÄµØÖ·
-,unsigned short width               // ÏÔÊ¾²ãµÄ¿í¶È
-,unsigned char Size          		// ÉèÖÃ×ÖÌå´óÐ¡  48£º48*48     72:72*72
-,unsigned char ChromaKey     		// 0£º×ÖÌå±³¾°É«Í¸Ã÷    1£º¿ÉÒÔÉèÖÃ×ÖÌåµÄ±³¾°É«
-,unsigned short x                   // ×ÖÌå¿ªÊ¼ÏÔÊ¾µÄxÎ»ÖÃ
-,unsigned short y                   // ×ÖÌå¿ªÊ¼ÏÔÊ¾µÄyÎ»ÖÃ
-,unsigned long FontColor            // ×ÖÌåµÄÑÕÉ«
-,unsigned long BackGroundColor      // ×ÖÌåµÄ±³¾°É«£¨×¢Òâ£ºµ±×ÖÌå±³¾°³õÊ¼»¯³ÉÍ¸Ã÷Ê±£¬ÉèÖÃ¸ÃÖµÎÞÐ§£©
-,unsigned short w				// ×ÖÌå´ÖÏ¸£º0£º²»¼Ó´Ö  1£º¼Ó´Ö1¼¶  2£º¼Ó´Ö2¼¶
-,unsigned short s                   // ÐÐ¾à
-,unsigned char *c                   // Êý¾Ý»º³åµÄÊ×µØÖ·
-)
-{
-	unsigned short temp_H = 0;
-	unsigned short temp_L = 0;
-	unsigned short temp = 0;
-	unsigned long i = 0;
-	unsigned short j = 0;
-	unsigned short k = 0;
-	unsigned short h = 0;
-	unsigned short n = 0;
-	unsigned short m = 0;
-	unsigned short g = 0;
-	unsigned short f = 0;
-	
-	h = x; k = y;
-	Memory_8bpp_Mode();//Ê¹ÓÃ8Î»É«ÉîÀ´´æ´¢Í¼Æ¬
- 	Canvas_Image_Start_address(MemoryAddr);
- 	Canvas_image_width(width);
-	while(c[i] != '\0')
-	{
-		temp_H = (c[i] - 0xa1) * 94;
-		temp_L = c[i+1] - 0xa1;
-		temp = temp_H + temp_L;
-		LT768_DMA_24bit_Block(SCS,Clk,0,Size*j,Size/8,Size,Size/8,FlashAddr+temp*((Size*Size)/8));
-		i+=2;
-		j++;
-	}
-	
-	Memory_16bpp_Mode();
-	Canvas_Image_Start_address(ShowAddr);
-	Canvas_image_width(width);
-	j = 0; i = 0;
-	
-	if(w>2)	w = 2;
-	for(g=0;g<w+1;g++)
-	{
-		while(c[i] != '\0')
-		{
-			if((f == m)&&((x+Size*j+Size)>(width*(n+1)))) {m++;n++;y=y+Size-1+s;x = x+((width*n)-(x+Size*j))+g;f=n;}
-				
-			if(ChromaKey==1)
-			{
-				LT768_BTE_Memory_Copy_ColorExpansion_8(MemoryAddr,Size*j,
-										   ShowAddr,width,x+Size*j,y,
-										   Size,Size,FontColor,BackGroundColor
-										   );
-			}
-			if(ChromaKey==0)
-			{
-				LT768_BTE_Memory_Copy_ColorExpansion_Chroma_key_8(MemoryAddr,Size*j,   
-												  ShowAddr,width,x+Size*j,y,
-													Size,Size,FontColor
-													);
-			}
-			i+=2;
-			j++;
-		}
-		ChromaKey=0;i=0;j=0;m=0;n=0;f=0;x=h+g+1;y=k+g+1;
-	}
-}
-
-
-void LT768_Print_Outside_Font_BIG5_48_72
-(
- unsigned char SCS           		    // Ñ¡ÔñÍâ¹ÒµÄSPI   : SCS£º0       SCS£º1
-,unsigned char Clk           		    // SPIÊ±ÖÓ·ÖÆµ²ÎÊý : SPI Clock = System Clock /{(Clk+1)*2}
-,unsigned long FlashAddr     		    // ×Ö¿âÔ´µØÖ·(Flash)
-,unsigned long MemoryAddr    		    // Ä¿µÄµØÖ·(SDRAM)
-,unsigned long ShowAddr             // ÏÔÊ¾²ãµÄµØÖ·
-,unsigned short width               // ÏÔÊ¾²ãµÄ¿í¶È
-,unsigned char Size          		    // ÉèÖÃ×ÖÌå´óÐ¡  48£º48*48     72:72*72
-,unsigned char ChromaKey     		    // 0£º×ÖÌå±³¾°É«Í¸Ã÷    1£º¿ÉÒÔÉèÖÃ×ÖÌåµÄ±³¾°É«
-,unsigned short x                   // ×ÖÌå¿ªÊ¼ÏÔÊ¾µÄxÎ»ÖÃ
-,unsigned short y                   // ×ÖÌå¿ªÊ¼ÏÔÊ¾µÄyÎ»ÖÃ
-,unsigned long FontColor            // ×ÖÌåµÄÑÕÉ«
-,unsigned long BackGroundColor      // ×ÖÌåµÄ±³¾°É«£¨×¢Òâ£ºµ±×ÖÌå±³¾°³õÊ¼»¯³ÉÍ¸Ã÷Ê±£¬ÉèÖÃ¸ÃÖµÎÞÐ§£©
-,unsigned short w				            // ×ÖÌå´ÖÏ¸£º0£º²»¼Ó´Ö  1£º¼Ó´Ö1¼¶  2£º¼Ó´Ö2¼¶
-,unsigned short s                   // ÐÐ¾à
-,unsigned char *c                   // Êý¾Ý»º³åµÄÊ×µØÖ·
-)
-{
-	unsigned short temp_H = 0;
-	unsigned short temp_L = 0;
-	unsigned short temp = 0;
-	unsigned long i = 0;
-	unsigned short j = 0;
-	unsigned short k = 0;
-	unsigned short h = 0;
-	unsigned short n = 0;
-	unsigned short m = 0;
-	unsigned short g = 0;
-	unsigned short f = 0;
-	h = x; k = y;
-	Memory_8bpp_Mode();//Ê¹ÓÃ8Î»É«ÉîÀ´´æ´¢Í¼Æ¬
- 	Canvas_Image_Start_address(MemoryAddr);
- 	Canvas_image_width(width);
-	while(c[i] != '\0')
-	{
-		temp_H = (c[i] - 0xa1) * 160;
-		if(c[i+1]<0x7f)
-		{
-			temp_L = c[i+1] - 0x40;
-		}
-		else
-		{
-			temp_L = c[i+1] - 0xa0 + 0x40;
-		}
-		temp = temp_H + temp_L;
-		LT768_DMA_24bit_Block(SCS,Clk,0,Size*j,Size/8,Size,Size/8,FlashAddr+temp*((Size*Size)/8));
-		i+=2;
-		j++;
-	}
-	Memory_16bpp_Mode();   // ÒòÎªÏÔÊ¾ÊÇ16Î»µÄÉ«Éî£¬ËùÒÔÐèÒª×ªÎª16Î»É«Éî	
-	Canvas_Image_Start_address(ShowAddr);
-	Canvas_image_width(width);
-	j = 0; i = 0;
-	for(g=0;g<w;g++)
-	{
-		while(c[i] != '\0')
-		{
-			if((f == m)&&((x+Size*j+Size)>(1024*(n+1)))) {m++;n++;y=y+Size-1+s;x = x+((1024*n)-(x+Size*j))+g;f=n;}
-			if(ChromaKey==1)
-			{
-				LT768_BTE_Memory_Copy_ColorExpansion_8(MemoryAddr,Size*j,
-										 ShowAddr,LCD_XSIZE_TFT,x+Size*j,y,
-										 Size,Size,FontColor,BackGroundColor
-										);
-			}
-			if(ChromaKey==0)
-			{
-				LT768_BTE_Memory_Copy_ColorExpansion_Chroma_key_8(MemoryAddr,Size*j,   
-												 ShowAddr,LCD_XSIZE_TFT,x+Size*j,y,
-												 Size,Size,FontColor
-												);
-			}
-			i+=2;
-			j++;
-		}
-		ChromaKey=0;i=0;j=0;m=0;n=0;f=0;x=h+g+1;y=k+g+1;
-	}
-}
-
-
-
-void LT768_Text_cursor_Init
-(
- unsigned char On_Off_Blinking         // 0£º½ûÖ¹¹â±êÉÁË¸   1£ºÊ¹ÄÜ¹â±êÉÁË¸
-,unsigned short Blinking_Time          // ÉèÖÃÎÄ×Ö¹â±êÉÁË¸Ê±¼ä
-,unsigned short X_W                    // ÎÄ×Ö¹â±êË®Æ½´óÐ¡
-,unsigned short Y_W                    // ÎÄ×Ö¹â±ê´¹Ö±´óÐ¡
-)
-{
-	if(On_Off_Blinking == 0)	Disable_Text_Cursor_Blinking();
-	if(On_Off_Blinking == 1)	Enable_Text_Cursor_Blinking();
-
-  Blinking_Time_Frames(Blinking_Time); 
-	
-  //[3E][3Fh]
-  Text_Cursor_H_V(X_W,Y_W);
-	
-	Enable_Text_Cursor();
-}
-
-
-void LT768_Enable_Text_Cursor(void)
-{
-	Enable_Text_Cursor();
-}
-
-
-void LT768_Disable_Text_Cursor(void)
-{
-	Disable_Text_Cursor();
-}
-
-
-void LT768_Graphic_cursor_Init
-(
- unsigned char Cursor_N                  // Ñ¡Ôñ¹â±ê   1:¹â±ê1   2:¹â±ê2   3:¹â±ê3  4:¹â±ê4
-,unsigned char Color1                    // ÑÕÉ«1
-,unsigned char Color2                    // ÑÕÉ«2
-,unsigned short X_Pos                    // ÏÔÊ¾×ø±êX
-,unsigned short Y_Pos                    // ÏÔÊ¾×ø±êY
-,unsigned char *Cursor_Buf               // ¹â±êÊý¾ÝµÄ»º³åÊ×µØÖ·
-)
-{
-	unsigned int i ;
-	
-	Memory_Select_Graphic_Cursor_RAM(); 
-	Graphic_Mode();
-	
-	switch(Cursor_N)
-	{
-		case 1:	Select_Graphic_Cursor_1();	break;
-		case 2:	Select_Graphic_Cursor_2();	break;
-		case 3:	Select_Graphic_Cursor_3();	break;
-		case 4:	Select_Graphic_Cursor_4();	break;
-		default:break;
-	}
-	
-	LCD_CmdWrite(0x04);
-  for(i=0;i<256;i++)
-  {					 
-		LCD_DataWrite(Cursor_Buf[i]);
-  }
-	
-	Memory_Select_SDRAM();//Ð´ÍêºóÇÐ»ØSDRAM
-	Set_Graphic_Cursor_Color_1(Color1);
-  Set_Graphic_Cursor_Color_2(Color2);
-  Graphic_Cursor_XY(X_Pos,Y_Pos);
-	
-	Enable_Graphic_Cursor();
-}
-
-
-void LT768_Set_Graphic_cursor_Pos
-(
- unsigned char Cursor_N                  // Ñ¡Ôñ¹â±ê   1:¹â±ê1   2:¹â±ê2   3:¹â±ê3  4:¹â±ê4
-,unsigned short X_Pos                    // ÏÔÊ¾×ø±êX
-,unsigned short Y_Pos                    // ÏÔÊ¾×ø±êY
-)
-{
-	Graphic_Cursor_XY(X_Pos,Y_Pos);
-	switch(Cursor_N)
-	{
-		case 1:	Select_Graphic_Cursor_1();	break;
-		case 2:	Select_Graphic_Cursor_2();	break;
-		case 3:	Select_Graphic_Cursor_3();	break;
-		case 4:	Select_Graphic_Cursor_4();	break;
-		default:
-		break;
-	}
-}
-
-
-void LT768_Enable_Graphic_Cursor(void)
-{
-	Enable_Graphic_Cursor();
-}
-
-
-void LT768_Disable_Graphic_Cursor(void)
-{
-	Disable_Graphic_Cursor();
-}
-
-
-//-----------------------------------------------------------------------------------------------------------------------------
-
-void LT768_PIP_Init
-(
- unsigned char On_Off         // 0 : ½ûÖ¹ PIP    1 : Ê¹ÄÜ PIP    2 : ±£³ÖÔ­À´µÄ×´Ì¬
-,unsigned char Select_PIP     // 1 : Ê¹ÓÃ PIP1   2 : Ê¹ÓÃ PIP2
-,unsigned long PAddr          // PIPµÄ¿ªÊ¼µØÖ·
-,unsigned short XP            // PIP´°¿ÚµÄX×ø±ê,±ØÐë±»4Õû³ý
-,unsigned short YP            // PIP´°¿ÚµÄY×ø±ê,±ØÐë±»4Õû³ý
-,unsigned long ImageWidth     // µ×Í¼µÄ¿í¶È
-,unsigned short X_Dis         // ÏÔÊ¾´°¿ÚµÄX×ø±ê
-,unsigned short Y_Dis         // ÏÔÊ¾´°¿ÚµÄY×ø±ê
-,unsigned short X_W           // ÏÔÊ¾´°¿ÚµÄ¿í¶È£¬±ØÐë±»4Õû³ý
-,unsigned short Y_H           // ÏÔÊ¾´°¿ÚµÄ³¤¶È£¬±ØÐë±»4Õû³ý
-)
-{
-	if(Select_PIP == 1 )  
-	{
-		Select_PIP1_Window_16bpp();
-		Select_PIP1_Parameter();
-	}
-	if(Select_PIP == 2 )  
-	{
-		Select_PIP2_Window_16bpp();
-		Select_PIP2_Parameter();
-	}
-	
-	PIP_Display_Start_XY(X_Dis,Y_Dis);
-	PIP_Image_Start_Address(PAddr);
-	PIP_Image_Width(ImageWidth);
-	PIP_Window_Image_Start_XY(XP,YP);
-	PIP_Window_Width_Height(X_W,Y_H);
-	
-
-	if(On_Off == 0)
-  {
-  	if(Select_PIP == 1 )  Disable_PIP1();	
-		if(Select_PIP == 2 )  Disable_PIP2();
-	}
-
-  if(On_Off == 1)
-  {
-		if(Select_PIP == 1 )  Enable_PIP1();	
-		if(Select_PIP == 2 )  Enable_PIP2();
-	}
-}
-
-
-void LT768_Set_DisWindowPos
-(
- unsigned char On_Off         // 0 : ½ûÖ¹ PIP, 1 : Ê¹ÄÜ PIP, 2 : ±£³ÖÔ­À´µÄ×´Ì¬
-,unsigned char Select_PIP     // 1 : Ê¹ÓÃ PIP1 , 2 : Ê¹ÓÃ PIP2
-,unsigned short X_Dis         // ÏÔÊ¾´°¿ÚµÄX×ø±ê
-,unsigned short Y_Dis         // ÏÔÊ¾´°¿ÚµÄY×ø±ê
-)
-{
-	if(Select_PIP == 1 )  Select_PIP1_Parameter();
-	if(Select_PIP == 2 )  Select_PIP2_Parameter();
-	
-	if(On_Off == 0)
-  {
-  	if(Select_PIP == 1 )  Disable_PIP1();	
-		if(Select_PIP == 2 )  Disable_PIP2();
-	}
-
-  if(On_Off == 1)
-  {
-		if(Select_PIP == 1 )  Enable_PIP1();	
-		if(Select_PIP == 2 )  Enable_PIP2();
-	}
-	
-	PIP_Display_Start_XY(X_Dis,Y_Dis);
-	
-}
-
-
-
-
-//-----------------------------------------------------------------------------------------------------------------------------
-
-
-
-void BTE_Solid_Fill
-(
- unsigned long Des_Addr           // Ìî³äµÄÄ¿µÄµØÖ· 
-,unsigned short Des_W             // Ä¿µÄµØÖ·Í¼Æ¬¿í¶È
-,unsigned short XDes              // x×ø±ê 
-,unsigned short YDes              // y×ø±ê 
-,unsigned short color             // Ìî³äµÄÑÕÉ« 
-,unsigned short X_W               // Ìî³äµÄ³¤¶È 
-,unsigned short Y_H               // Ìî³äµÄ¿í¶È 
-)            
-{
-	
-	BTE_Destination_Color_16bpp();
-	
+  BTE_Destination_Color_16bpp();
   BTE_Destination_Memory_Start_Address(Des_Addr);
-    
   BTE_Destination_Image_Width(Des_W);
-  BTE_Destination_Window_Start_XY(XDes,YDes);
-  BTE_Window_Size(X_W,Y_H);
-    
+  BTE_Destination_Window_Start_XY(XDes, YDes);
+
+  BTE_Operation_Code(0x0e); // BTE Operation: Memory copy (move) with chroma keying (w/o ROP)
+  BTE_Window_Size(X_W, Y_H);
+  BTE_Enable();
+  Check_BTE_Busy();
+}
+
+void LT768_BTE_Memory_Copy_ColorExpansion_Chroma_key_8(
+    unsigned long S0_Addr // SOÍ¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short YS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long Des_Addr // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½Ê¼xï¿½ï¿½ï¿½ï¿½)
+    ,
+    unsigned short YDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½Ê¼yï¿½ï¿½ï¿½ï¿½)
+    ,
+    unsigned short X_W // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+    ,
+    unsigned long Foreground_color) {
+  Foreground_color_256(Foreground_color);
+  BTE_ROP_Code(7);
+
+  BTE_S0_Color_8bpp();
+  BTE_S0_Memory_Start_Address(S0_Addr);
+  BTE_S0_Image_Width(Des_W);
+  BTE_S0_Window_Start_XY(0, YS0);
+
+  BTE_Destination_Color_16bpp();
+  BTE_Destination_Memory_Start_Address(Des_Addr);
+  BTE_Destination_Image_Width(Des_W);
+  BTE_Destination_Window_Start_XY(XDes, YDes);
+
+  BTE_Operation_Code(0x0f); // BTE Operation: Memory copy (move) with chroma keying (w/o ROP)
+  BTE_Window_Size(X_W, Y_H);
+  BTE_Enable();
+  Check_BTE_Busy();
+}
+
+void LT768_Print_Outside_Font_GB2312_48_72(
+    unsigned char SCS // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI   : SCSï¿½ï¿½0       SCSï¿½ï¿½1
+    ,
+    unsigned char Clk // SPIÊ±ï¿½Ó·ï¿½Æµï¿½ï¿½ï¿½ï¿½ : SPI Clock = System Clock /{(Clk+1)*2}
+    ,
+    unsigned long FlashAddr // ï¿½Ö¿ï¿½Ô´ï¿½ï¿½Ö·(Flash)
+    ,
+    unsigned long MemoryAddr // Ä¿ï¿½Äµï¿½Ö·(SDRAM)
+    ,
+    unsigned long ShowAddr // ï¿½ï¿½Ê¾ï¿½ï¿½Äµï¿½Ö·
+    ,
+    unsigned short width // ï¿½ï¿½Ê¾ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned char Size // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡  48ï¿½ï¿½48*48     72:72*72
+    ,
+    unsigned char ChromaKey // 0ï¿½ï¿½ï¿½ï¿½ï¿½å±³ï¿½ï¿½É«Í¸ï¿½ï¿½    1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½É«
+    ,
+    unsigned short x // ï¿½ï¿½ï¿½å¿ªÊ¼ï¿½ï¿½Ê¾ï¿½ï¿½xÎ»ï¿½ï¿½
+    ,
+    unsigned short y // ï¿½ï¿½ï¿½å¿ªÊ¼ï¿½ï¿½Ê¾ï¿½ï¿½yÎ»ï¿½ï¿½
+    ,
+    unsigned long FontColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned long BackGroundColor // ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½É«ï¿½ï¿½×¢ï¿½â£ºï¿½ï¿½ï¿½ï¿½ï¿½å±³ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ã¸ï¿½Öµï¿½ï¿½Ð§ï¿½ï¿½
+    ,
+    unsigned short w // ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½Ó´ï¿½  1ï¿½ï¿½ï¿½Ó´ï¿½1ï¿½ï¿½  2ï¿½ï¿½ï¿½Ó´ï¿½2ï¿½ï¿½
+    ,
+    unsigned short s // ï¿½Ð¾ï¿½
+    ,
+    unsigned char* c // ï¿½ï¿½ï¿½Ý»ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned short temp_H = 0;
+  unsigned short temp_L = 0;
+  unsigned short temp = 0;
+  unsigned long i = 0;
+  unsigned short j = 0;
+  unsigned short k = 0;
+  unsigned short h = 0;
+  unsigned short n = 0;
+  unsigned short m = 0;
+  unsigned short g = 0;
+  unsigned short f = 0;
+
+  h = x;
+  k = y;
+  Memory_8bpp_Mode(); // Ê¹ï¿½ï¿½8Î»É«ï¿½ï¿½ï¿½ï¿½ï¿½æ´¢Í¼Æ¬
+  Canvas_Image_Start_address(MemoryAddr);
+  Canvas_image_width(width);
+  while (c[i] != '\0') {
+    temp_H = (c[i] - 0xa1) * 94;
+    temp_L = c[i + 1] - 0xa1;
+    temp = temp_H + temp_L;
+    LT768_DMA_24bit_Block(SCS, Clk, 0, Size * j, Size / 8, Size, Size / 8, FlashAddr + temp * ((Size * Size) / 8));
+    i += 2;
+    j++;
+  }
+
+  Memory_16bpp_Mode();
+  Canvas_Image_Start_address(ShowAddr);
+  Canvas_image_width(width);
+  j = 0;
+  i = 0;
+
+  if (w > 2)
+    w = 2;
+  for (g = 0; g < w + 1; g++) {
+    while (c[i] != '\0') {
+      if ((f == m) && ((x + Size * j + Size) > (width * (n + 1)))) {
+        m++;
+        n++;
+        y = y + Size - 1 + s;
+        x = x + ((width * n) - (x + Size * j)) + g;
+        f = n;
+      }
+
+      if (ChromaKey == 1) {
+        LT768_BTE_Memory_Copy_ColorExpansion_8(MemoryAddr, Size * j,
+                                               ShowAddr, width, x + Size * j, y,
+                                               Size, Size, FontColor, BackGroundColor);
+      }
+      if (ChromaKey == 0) {
+        LT768_BTE_Memory_Copy_ColorExpansion_Chroma_key_8(MemoryAddr, Size * j,
+                                                          ShowAddr, width, x + Size * j, y,
+                                                          Size, Size, FontColor);
+      }
+      i += 2;
+      j++;
+    }
+    ChromaKey = 0;
+    i = 0;
+    j = 0;
+    m = 0;
+    n = 0;
+    f = 0;
+    x = h + g + 1;
+    y = k + g + 1;
+  }
+}
+
+void LT768_Print_Outside_Font_BIG5_48_72(
+    unsigned char SCS // Ñ¡ï¿½ï¿½ï¿½ï¿½Òµï¿½SPI   : SCSï¿½ï¿½0       SCSï¿½ï¿½1
+    ,
+    unsigned char Clk // SPIÊ±ï¿½Ó·ï¿½Æµï¿½ï¿½ï¿½ï¿½ : SPI Clock = System Clock /{(Clk+1)*2}
+    ,
+    unsigned long FlashAddr // ï¿½Ö¿ï¿½Ô´ï¿½ï¿½Ö·(Flash)
+    ,
+    unsigned long MemoryAddr // Ä¿ï¿½Äµï¿½Ö·(SDRAM)
+    ,
+    unsigned long ShowAddr // ï¿½ï¿½Ê¾ï¿½ï¿½Äµï¿½Ö·
+    ,
+    unsigned short width // ï¿½ï¿½Ê¾ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned char Size // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡  48ï¿½ï¿½48*48     72:72*72
+    ,
+    unsigned char ChromaKey // 0ï¿½ï¿½ï¿½ï¿½ï¿½å±³ï¿½ï¿½É«Í¸ï¿½ï¿½    1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½É«
+    ,
+    unsigned short x // ï¿½ï¿½ï¿½å¿ªÊ¼ï¿½ï¿½Ê¾ï¿½ï¿½xÎ»ï¿½ï¿½
+    ,
+    unsigned short y // ï¿½ï¿½ï¿½å¿ªÊ¼ï¿½ï¿½Ê¾ï¿½ï¿½yÎ»ï¿½ï¿½
+    ,
+    unsigned long FontColor // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned long BackGroundColor // ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½É«ï¿½ï¿½×¢ï¿½â£ºï¿½ï¿½ï¿½ï¿½ï¿½å±³ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ã¸ï¿½Öµï¿½ï¿½Ð§ï¿½ï¿½
+    ,
+    unsigned short w // ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½Ó´ï¿½  1ï¿½ï¿½ï¿½Ó´ï¿½1ï¿½ï¿½  2ï¿½ï¿½ï¿½Ó´ï¿½2ï¿½ï¿½
+    ,
+    unsigned short s // ï¿½Ð¾ï¿½
+    ,
+    unsigned char* c // ï¿½ï¿½ï¿½Ý»ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned short temp_H = 0;
+  unsigned short temp_L = 0;
+  unsigned short temp = 0;
+  unsigned long i = 0;
+  unsigned short j = 0;
+  unsigned short k = 0;
+  unsigned short h = 0;
+  unsigned short n = 0;
+  unsigned short m = 0;
+  unsigned short g = 0;
+  unsigned short f = 0;
+  h = x;
+  k = y;
+  Memory_8bpp_Mode(); // Ê¹ï¿½ï¿½8Î»É«ï¿½ï¿½ï¿½ï¿½ï¿½æ´¢Í¼Æ¬
+  Canvas_Image_Start_address(MemoryAddr);
+  Canvas_image_width(width);
+  while (c[i] != '\0') {
+    temp_H = (c[i] - 0xa1) * 160;
+    if (c[i + 1] < 0x7f) {
+      temp_L = c[i + 1] - 0x40;
+    } else {
+      temp_L = c[i + 1] - 0xa0 + 0x40;
+    }
+    temp = temp_H + temp_L;
+    LT768_DMA_24bit_Block(SCS, Clk, 0, Size * j, Size / 8, Size, Size / 8, FlashAddr + temp * ((Size * Size) / 8));
+    i += 2;
+    j++;
+  }
+  Memory_16bpp_Mode(); // ï¿½ï¿½Îªï¿½ï¿½Ê¾ï¿½ï¿½16Î»ï¿½ï¿½É«ï¿½î£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òª×ªÎª16Î»É«ï¿½ï¿½
+  Canvas_Image_Start_address(ShowAddr);
+  Canvas_image_width(width);
+  j = 0;
+  i = 0;
+  for (g = 0; g < w; g++) {
+    while (c[i] != '\0') {
+      if ((f == m) && ((x + Size * j + Size) > (1024 * (n + 1)))) {
+        m++;
+        n++;
+        y = y + Size - 1 + s;
+        x = x + ((1024 * n) - (x + Size * j)) + g;
+        f = n;
+      }
+      if (ChromaKey == 1) {
+        LT768_BTE_Memory_Copy_ColorExpansion_8(MemoryAddr, Size * j,
+                                               ShowAddr, LCD_XSIZE_TFT, x + Size * j, y,
+                                               Size, Size, FontColor, BackGroundColor);
+      }
+      if (ChromaKey == 0) {
+        LT768_BTE_Memory_Copy_ColorExpansion_Chroma_key_8(MemoryAddr, Size * j,
+                                                          ShowAddr, LCD_XSIZE_TFT, x + Size * j, y,
+                                                          Size, Size, FontColor);
+      }
+      i += 2;
+      j++;
+    }
+    ChromaKey = 0;
+    i = 0;
+    j = 0;
+    m = 0;
+    n = 0;
+    f = 0;
+    x = h + g + 1;
+    y = k + g + 1;
+  }
+}
+
+void LT768_Text_cursor_Init(
+    unsigned char On_Off_Blinking // 0ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½Ë¸   1ï¿½ï¿½Ê¹ï¿½Ü¹ï¿½ï¿½ï¿½ï¿½Ë¸
+    ,
+    unsigned short Blinking_Time // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½Ë¸Ê±ï¿½ï¿½
+    ,
+    unsigned short X_W // ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½Ë®Æ½ï¿½ï¿½Ð¡
+    ,
+    unsigned short Y_W // ï¿½ï¿½ï¿½Ö¹ï¿½ê´¹Ö±ï¿½ï¿½Ð¡
+) {
+  if (On_Off_Blinking == 0)
+    Disable_Text_Cursor_Blinking();
+  if (On_Off_Blinking == 1)
+    Enable_Text_Cursor_Blinking();
+
+  Blinking_Time_Frames(Blinking_Time);
+
+  //[3E][3Fh]
+  Text_Cursor_H_V(X_W, Y_W);
+
+  Enable_Text_Cursor();
+}
+
+void LT768_Enable_Text_Cursor(void) {
+  Enable_Text_Cursor();
+}
+
+void LT768_Disable_Text_Cursor(void) {
+  Disable_Text_Cursor();
+}
+
+void LT768_Graphic_cursor_Init(
+    unsigned char Cursor_N // Ñ¡ï¿½ï¿½ï¿½ï¿½   1:ï¿½ï¿½ï¿½1   2:ï¿½ï¿½ï¿½2   3:ï¿½ï¿½ï¿½3  4:ï¿½ï¿½ï¿½4
+    ,
+    unsigned char Color1 // ï¿½ï¿½É«1
+    ,
+    unsigned char Color2 // ï¿½ï¿½É«2
+    ,
+    unsigned short X_Pos // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½X
+    ,
+    unsigned short Y_Pos // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Y
+    ,
+    unsigned char* Cursor_Buf // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄ»ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned int i;
+
+  Memory_Select_Graphic_Cursor_RAM();
+  Graphic_Mode();
+
+  switch (Cursor_N) {
+  case 1:
+    Select_Graphic_Cursor_1();
+    break;
+  case 2:
+    Select_Graphic_Cursor_2();
+    break;
+  case 3:
+    Select_Graphic_Cursor_3();
+    break;
+  case 4:
+    Select_Graphic_Cursor_4();
+    break;
+  default:
+    break;
+  }
+
+  LCD_CmdWrite(0x04);
+  for (i = 0; i < 256; i++) {
+    LCD_DataWrite(Cursor_Buf[i]);
+  }
+
+  Memory_Select_SDRAM(); // Ð´ï¿½ï¿½ï¿½ï¿½Ð»ï¿½SDRAM
+  Set_Graphic_Cursor_Color_1(Color1);
+  Set_Graphic_Cursor_Color_2(Color2);
+  Graphic_Cursor_XY(X_Pos, Y_Pos);
+
+  Enable_Graphic_Cursor();
+}
+
+void LT768_Set_Graphic_cursor_Pos(
+    unsigned char Cursor_N // Ñ¡ï¿½ï¿½ï¿½ï¿½   1:ï¿½ï¿½ï¿½1   2:ï¿½ï¿½ï¿½2   3:ï¿½ï¿½ï¿½3  4:ï¿½ï¿½ï¿½4
+    ,
+    unsigned short X_Pos // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½X
+    ,
+    unsigned short Y_Pos // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Y
+) {
+  Graphic_Cursor_XY(X_Pos, Y_Pos);
+  switch (Cursor_N) {
+  case 1:
+    Select_Graphic_Cursor_1();
+    break;
+  case 2:
+    Select_Graphic_Cursor_2();
+    break;
+  case 3:
+    Select_Graphic_Cursor_3();
+    break;
+  case 4:
+    Select_Graphic_Cursor_4();
+    break;
+  default:
+    break;
+  }
+}
+
+void LT768_Enable_Graphic_Cursor(void) {
+  Enable_Graphic_Cursor();
+}
+
+void LT768_Disable_Graphic_Cursor(void) {
+  Disable_Graphic_Cursor();
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+void LT768_PIP_Init(
+    unsigned char On_Off // 0 : ï¿½ï¿½Ö¹ PIP    1 : Ê¹ï¿½ï¿½ PIP    2 : ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½×´Ì¬
+    ,
+    unsigned char Select_PIP // 1 : Ê¹ï¿½ï¿½ PIP1   2 : Ê¹ï¿½ï¿½ PIP2
+    ,
+    unsigned long PAddr // PIPï¿½Ä¿ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short XP // PIPï¿½ï¿½ï¿½Úµï¿½Xï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ë±»4ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YP // PIPï¿½ï¿½ï¿½Úµï¿½Yï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ë±»4ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long ImageWidth // ï¿½ï¿½Í¼ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short X_Dis // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Úµï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_Dis // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Úµï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short X_W // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½È£ï¿½ï¿½ï¿½ï¿½ë±»4ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½È£ï¿½ï¿½ï¿½ï¿½ë±»4ï¿½ï¿½ï¿½ï¿½
+) {
+  if (Select_PIP == 1) {
+    Select_PIP1_Window_16bpp();
+    Select_PIP1_Parameter();
+  }
+  if (Select_PIP == 2) {
+    Select_PIP2_Window_16bpp();
+    Select_PIP2_Parameter();
+  }
+
+  PIP_Display_Start_XY(X_Dis, Y_Dis);
+  PIP_Image_Start_Address(PAddr);
+  PIP_Image_Width(ImageWidth);
+  PIP_Window_Image_Start_XY(XP, YP);
+  PIP_Window_Width_Height(X_W, Y_H);
+
+  if (On_Off == 0) {
+    if (Select_PIP == 1)
+      Disable_PIP1();
+    if (Select_PIP == 2)
+      Disable_PIP2();
+  }
+
+  if (On_Off == 1) {
+    if (Select_PIP == 1)
+      Enable_PIP1();
+    if (Select_PIP == 2)
+      Enable_PIP2();
+  }
+}
+
+void LT768_Set_DisWindowPos(
+    unsigned char On_Off // 0 : ï¿½ï¿½Ö¹ PIP, 1 : Ê¹ï¿½ï¿½ PIP, 2 : ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½×´Ì¬
+    ,
+    unsigned char Select_PIP // 1 : Ê¹ï¿½ï¿½ PIP1 , 2 : Ê¹ï¿½ï¿½ PIP2
+    ,
+    unsigned short X_Dis // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Úµï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_Dis // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Úµï¿½Yï¿½ï¿½ï¿½ï¿½
+) {
+  if (Select_PIP == 1)
+    Select_PIP1_Parameter();
+  if (Select_PIP == 2)
+    Select_PIP2_Parameter();
+
+  if (On_Off == 0) {
+    if (Select_PIP == 1)
+      Disable_PIP1();
+    if (Select_PIP == 2)
+      Disable_PIP2();
+  }
+
+  if (On_Off == 1) {
+    if (Select_PIP == 1)
+      Enable_PIP1();
+    if (Select_PIP == 2)
+      Enable_PIP2();
+  }
+
+  PIP_Display_Start_XY(X_Dis, Y_Dis);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+void BTE_Solid_Fill(
+    unsigned long Des_Addr // ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½Äµï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½Äµï¿½Ö·Í¼Æ¬ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YDes // yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short color // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+    ,
+    unsigned short X_W // ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+) {
+
+  BTE_Destination_Color_16bpp();
+
+  BTE_Destination_Memory_Start_Address(Des_Addr);
+
+  BTE_Destination_Image_Width(Des_W);
+  BTE_Destination_Window_Start_XY(XDes, YDes);
+  BTE_Window_Size(X_W, Y_H);
+
   Foreground_color_65k(color);
   BTE_Operation_Code(0x0c);
   BTE_Enable();
-  Check_BTE_Busy();     
+  Check_BTE_Busy();
 }
 
-/*  ½áºÏ¹âÕ¤²Ù×÷µÄBTEÄÚ´æ¸´ÖÆ */
-void LT768_BTE_Memory_Copy
-(
- unsigned long S0_Addr     // SOÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short S0_W       // S0Í¼ÏñµÄ¿í¶È
-,unsigned short XS0        // S0Í¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YS0        // S0Í¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned long S1_Addr     // S1Í¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short S1_W       // S1Í¼ÏñµÄ¿í¶È
-,unsigned short XS1        // S1Í¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YS1        // S1Í¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned long Des_Addr    // Ä¿µÄÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short Des_W      // Ä¿µÄÍ¼ÏñµÄ¿í¶È
-,unsigned short XDes       // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YDes       // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned int ROP_Code     // ¹âÕ¤²Ù×÷Ä£Ê½
-/*ROP_Code :
-   0000b		0(Blackness)
-   0001b		~S0!E~S1 or ~(S0+S1)
-   0010b		~S0!ES1
-   0011b		~S0
-   0100b		S0!E~S1
-   0101b		~S1
-   0110b		S0^S1
-   0111b		~S0 + ~S1 or ~(S0 + S1)
-   1000b		S0!ES1
-   1001b		~(S0^S1)
-   1010b		S1
-   1011b		~S0+S1
-   1100b		S0
-   1101b		S0+~S1
-   1110b		S0+S1
-   1111b		1(whiteness)*/
-,unsigned short X_W       // »î¶¯´°¿ÚµÄ¿í¶È
-,unsigned short Y_H       // »î¶¯´°¿ÚµÄ³¤¶È
-)
-{
-	BTE_S0_Color_16bpp();
-	BTE_S0_Memory_Start_Address(S0_Addr);
+/*  ï¿½ï¿½Ï¹ï¿½Õ¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½BTEï¿½Ú´æ¸´ï¿½ï¿½ */
+void LT768_BTE_Memory_Copy(
+    unsigned long S0_Addr // SOÍ¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short S0_W // S0Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long S1_Addr // S1Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short S1_W // S1Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XS1 // S1Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YS1 // S1Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long Des_Addr // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned int ROP_Code // ï¿½ï¿½Õ¤ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+    /*ROP_Code :
+       0000b		0(Blackness)
+       0001b		~S0!E~S1 or ~(S0+S1)
+       0010b		~S0!ES1
+       0011b		~S0
+       0100b		S0!E~S1
+       0101b		~S1
+       0110b		S0^S1
+       0111b		~S0 + ~S1 or ~(S0 + S1)
+       1000b		S0!ES1
+       1001b		~(S0^S1)
+       1010b		S1
+       1011b		~S0+S1
+       1100b		S0
+       1101b		S0+~S1
+       1110b		S0+S1
+       1111b		1(whiteness)*/
+    ,
+    unsigned short X_W // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+) {
+  BTE_S0_Color_16bpp();
+  BTE_S0_Memory_Start_Address(S0_Addr);
   BTE_S0_Image_Width(S0_W);
-  BTE_S0_Window_Start_XY(XS0,YS0);
+  BTE_S0_Window_Start_XY(XS0, YS0);
 
-	BTE_S1_Color_16bpp();
+  BTE_S1_Color_16bpp();
   BTE_S1_Memory_Start_Address(S1_Addr);
-  BTE_S1_Image_Width(S1_W); 
-  BTE_S1_Window_Start_XY(XS1,YS1);
+  BTE_S1_Image_Width(S1_W);
+  BTE_S1_Window_Start_XY(XS1, YS1);
 
-	BTE_Destination_Color_16bpp();
+  BTE_Destination_Color_16bpp();
   BTE_Destination_Memory_Start_Address(Des_Addr);
   BTE_Destination_Image_Width(Des_W);
-  BTE_Destination_Window_Start_XY(XDes,YDes);	
-   
-  BTE_ROP_Code(ROP_Code);	
-  BTE_Operation_Code(0x02); //BTE Operation: Memory copy (move) with ROP.
-  BTE_Window_Size(X_W,Y_H); 
-  BTE_Enable();
-  Check_BTE_Busy();
-}
+  BTE_Destination_Window_Start_XY(XDes, YDes);
 
-
-/*  ½áºÏ Chroma Key µÄÄÚ´æ¸´ÖÆ£¨²»º¬ ROP£© */
-void LT768_BTE_Memory_Copy_Chroma_key
-(
- unsigned long S0_Addr             // SOÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short S0_W               // S0Í¼ÏñµÄ¿í¶È
-,unsigned short XS0                // S0Í¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YS0                // S0Í¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned long Des_Addr            // Ä¿µÄÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short Des_W              // Ä¿µÄÍ¼ÏñµÄ¿í¶È
-,unsigned short XDes               // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YDes               // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned long Background_color    // Í¸Ã÷É«
-,unsigned short X_W                // »î¶¯´°¿ÚµÄ¿í¶È
-,unsigned short Y_H                // »î¶¯´°¿ÚµÄ³¤¶È
-)
-{
-	Background_color_65k(Background_color); 
-	
-	BTE_S0_Color_16bpp();
-  BTE_S0_Memory_Start_Address(S0_Addr);
-  BTE_S0_Image_Width(S0_W);
-  BTE_S0_Window_Start_XY(XS0,YS0);	
-
-	BTE_Destination_Color_16bpp();
-  BTE_Destination_Memory_Start_Address(Des_Addr);
-  BTE_Destination_Image_Width(Des_W);
-  BTE_Destination_Window_Start_XY(XDes,YDes);
-   
-  BTE_Operation_Code(0x05);	//BTE Operation: Memory copy (move) with chroma keying (w/o ROP)
-  BTE_Window_Size(X_W,Y_H); 
-  BTE_Enable();
-  Check_BTE_Busy();
-}
-
-
-void LT768_BTE_Pattern_Fill
-(
- unsigned char P_8x8_or_16x16      // 0 : use 8x8 Icon , 1 : use 16x16 Icon.
-,unsigned long S0_Addr             // SOÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short S0_W               // S0Í¼ÏñµÄ¿í¶È
-,unsigned short XS0                // S0Í¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YS0                // S0Í¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned long Des_Addr            // Ä¿µÄÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short Des_W              // Ä¿µÄÍ¼ÏñµÄ¿í¶È
-, unsigned short XDes              // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YDes               // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned int ROP_Code             // ¹âÕ¤²Ù×÷Ä£Ê½
-/*ROP_Code :
-   0000b		0(Blackness)
-   0001b		~S0!E~S1 or ~(S0+S1)
-   0010b		~S0!ES1
-   0011b		~S0
-   0100b		S0!E~S1
-   0101b		~S1
-   0110b		S0^S1
-   0111b		~S0 + ~S1 or ~(S0 + S1)
-   1000b		S0!ES1
-   1001b		~(S0^S1)
-   1010b		S1
-   1011b		~S0+S1
-   1100b		S0
-   1101b		S0+~S1
-   1110b		S0+S1
-   1111b		1(whiteness)*/
-,unsigned short X_W                // »î¶¯´°¿ÚµÄ¿í¶È
-,unsigned short Y_H                // »î¶¯´°¿ÚµÄ³¤¶È
-)
-{
-	if(P_8x8_or_16x16 == 0)
-  {
-		Pattern_Format_8X8();
-  }
-  if(P_8x8_or_16x16 == 1)
-  {														    
-		Pattern_Format_16X16();
-  }	
-	
-	BTE_S0_Color_16bpp();
-  BTE_S0_Memory_Start_Address(S0_Addr);
-  BTE_S0_Image_Width(S0_W);
-  BTE_S0_Window_Start_XY(XS0,YS0);
-
-	BTE_Destination_Color_16bpp();
-  BTE_Destination_Memory_Start_Address(Des_Addr);
-  BTE_Destination_Image_Width(Des_W);
-  BTE_Destination_Window_Start_XY(XDes,YDes);	
-   
-  BTE_ROP_Code(ROP_Code);	
-  BTE_Operation_Code(0x06); //BTE Operation: Pattern Fill with ROP.
-  BTE_Window_Size(X_W,Y_H); 
-  BTE_Enable();
-  Check_BTE_Busy();
-}
-
-
-
-void LT768_BTE_Pattern_Fill_With_Chroma_key
-(
- unsigned char P_8x8_or_16x16      // 0 : use 8x8 Icon , 1 : use 16x16 Icon.
-,unsigned long S0_Addr             // SOÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short S0_W               // S0Í¼ÏñµÄ¿í¶È
-,unsigned short XS0                // S0Í¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YS0                // S0Í¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned long Des_Addr            // Ä¿µÄÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short Des_W              // Ä¿µÄÍ¼ÏñµÄ¿í¶È
-,unsigned short XDes               // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YDes               // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned int ROP_Code             // ¹âÕ¤²Ù×÷Ä£Ê½
-/*ROP_Code :
-   0000b		0(Blackness)
-   0001b		~S0!E~S1 or ~(S0+S1)
-   0010b		~S0!ES1
-   0011b		~S0
-   0100b		S0!E~S1
-   0101b		~S1
-   0110b		S0^S1
-   0111b		~S0 + ~S1 or ~(S0 + S1)
-   1000b		S0!ES1
-   1001b		~(S0^S1)
-   1010b		S1
-   1011b		~S0+S1
-   1100b		S0
-   1101b		S0+~S1
-   1110b		S0+S1
-   1111b		1(whiteness)*/
-,unsigned long Background_color   // Í¸Ã÷É«
-,unsigned short X_W               // »î¶¯´°¿ÚµÄ¿í¶È
-,unsigned short Y_H               // »î¶¯´°¿ÚµÄ³¤¶È
-)
-{
-	Background_color_65k(Background_color);
-	
-	if(P_8x8_or_16x16 == 0)
-  {
-  Pattern_Format_8X8();
-   }
-  if(P_8x8_or_16x16 == 1)
-  {														    
-  Pattern_Format_16X16();
-  }	  
-	
-	BTE_S0_Color_16bpp();
-  BTE_S0_Memory_Start_Address(S0_Addr);
-  BTE_S0_Image_Width(S0_W);
-  BTE_S0_Window_Start_XY(XS0,YS0);
-
-	BTE_Destination_Color_16bpp();
-  BTE_Destination_Memory_Start_Address(Des_Addr);
-  BTE_Destination_Image_Width(Des_W);
-  BTE_Destination_Window_Start_XY(XDes,YDes);	
-   
-  BTE_ROP_Code(ROP_Code);	
-  BTE_Operation_Code(0x07); //BTE Operation: Pattern Fill with Chroma key.
-  BTE_Window_Size(X_W,Y_H); 
-  BTE_Enable();
-  Check_BTE_Busy();
-}
-
-
-
-void LT768_BTE_MCU_Write_MCU_16bit
-(
- unsigned long S1_Addr              // S1Í¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short S1_W                // S1Í¼ÏñµÄ¿í¶È
-,unsigned short XS1                 // S1Í¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YS1                 // S1Í¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned long Des_Addr             // Ä¿µÄÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short Des_W               // Ä¿µÄÍ¼ÏñµÄ¿í¶È
-,unsigned short XDes                // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YDes                // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned int ROP_Code              // ¹âÕ¤²Ù×÷Ä£Ê½ 
-/*ROP_Code :
-   0000b		0(Blackness)
-   0001b		~S0!E~S1 or ~(S0+S1)
-   0010b		~S0!ES1
-   0011b		~S0
-   0100b		S0!E~S1
-   0101b		~S1
-   0110b		S0^S1
-   0111b		~S0 + ~S1 or ~(S0 + S1)
-   1000b		S0!ES1
-   1001b		~(S0^S1)
-   1010b		S1
-   1011b		~S0+S1
-   1100b		S0
-   1101b		S0+~S1
-   1110b		S0+S1
-   1111b		1(whiteness)*/
-,unsigned short X_W                 // »î¶¯´°¿ÚµÄ¿í¶È
-,unsigned short Y_H                 // »î¶¯´°¿ÚµÄ³¤¶È
-,const unsigned short *data         // S0µÄÊý¾ÝÊ×µØÖ·
-)
-{
-	unsigned short i,j;
-
-	BTE_S1_Color_16bpp();
-  BTE_S1_Memory_Start_Address(S1_Addr);
-  BTE_S1_Image_Width(S1_W); 
-  BTE_S1_Window_Start_XY(XS1,YS1);
-
-	BTE_Destination_Color_16bpp();
-  BTE_Destination_Memory_Start_Address(Des_Addr);
-  BTE_Destination_Image_Width(Des_W);
-  BTE_Destination_Window_Start_XY(XDes,YDes);
-  
-  BTE_Window_Size(X_W,Y_H);
   BTE_ROP_Code(ROP_Code);
-  BTE_Operation_Code(0x00);		//BTE Operation: MPU Write with ROP.
+  BTE_Operation_Code(0x02); // BTE Operation: Memory copy (move) with ROP.
+  BTE_Window_Size(X_W, Y_H);
   BTE_Enable();
-	
-	BTE_S0_Color_16bpp();
-	LCD_CmdWrite(0x04);				 		//Memory Data Read/Write Port
-	
-	//MCU_16bit_ColorDepth_16bpp
-	for(i=0;i< Y_H;i++)
-	{	
-		for(j=0;j< (X_W);j++)
- 	  {
-			Check_Mem_WR_FIFO_not_Full();
-			LCD_DataWrite_Pixel((*data));
-			data++;
-	  }
-  }
-  Check_Mem_WR_FIFO_Empty();
-	Check_BTE_Busy();
+  Check_BTE_Busy();
 }
 
+/*  ï¿½ï¿½ï¿½ Chroma Key ï¿½ï¿½ï¿½Ú´æ¸´ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½ ROPï¿½ï¿½ */
+void LT768_BTE_Memory_Copy_Chroma_key(
+    unsigned long S0_Addr // SOÍ¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short S0_W // S0Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long Des_Addr // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long Background_color // Í¸ï¿½ï¿½É«
+    ,
+    unsigned short X_W // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+) {
+  Background_color_65k(Background_color);
 
+  BTE_S0_Color_16bpp();
+  BTE_S0_Memory_Start_Address(S0_Addr);
+  BTE_S0_Image_Width(S0_W);
+  BTE_S0_Window_Start_XY(XS0, YS0);
 
-void LT768_BTE_MCU_Write_Chroma_key_MCU_16bit
-(
- unsigned long Des_Addr                 // Ä¿µÄÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short Des_W                   // Ä¿µÄÍ¼ÏñµÄ¿í¶È
-,unsigned short XDes                    // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YDes                    // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned long Background_color         // Í¸Ã÷É«
-,unsigned short X_W                     // »î¶¯´°¿ÚµÄ¿í¶È
-,unsigned short Y_H                     // »î¶¯´°¿ÚµÄ³¤¶È
-,const unsigned short *data             // S0µÄÊý¾ÝÊÕµØÖ·
-)
-{
-	unsigned int i,j;
-	
-	Background_color_65k(Background_color);
-	
-	BTE_Destination_Color_16bpp();
-	BTE_Destination_Memory_Start_Address(Des_Addr);
+  BTE_Destination_Color_16bpp();
+  BTE_Destination_Memory_Start_Address(Des_Addr);
   BTE_Destination_Image_Width(Des_W);
-  BTE_Destination_Window_Start_XY(XDes,YDes);
-  
-  BTE_Window_Size(X_W,Y_H);
-  BTE_Operation_Code(0x04);		//BTE Operation: MPU Write with chroma keying (w/o ROP)
+  BTE_Destination_Window_Start_XY(XDes, YDes);
+
+  BTE_Operation_Code(0x05); // BTE Operation: Memory copy (move) with chroma keying (w/o ROP)
+  BTE_Window_Size(X_W, Y_H);
   BTE_Enable();
-	
-	BTE_S0_Color_16bpp();
-  LCD_CmdWrite(0x04);			//Memory Data Read/Write Port
-	
-	//MCU_16bit_ColorDepth_16bpp
-	for(i=0;i< Y_H;i++)
-	{	
-		for(j=0;j< (X_W);j++)
- 	  {
-			Check_Mem_WR_FIFO_not_Full();
-			LCD_DataWrite_Pixel((*data));
-			data++;
-	  }
-  }
-  Check_Mem_WR_FIFO_Empty();
-	Check_BTE_Busy();
+  Check_BTE_Busy();
 }
 
+void LT768_BTE_Pattern_Fill(
+    unsigned char P_8x8_or_16x16 // 0 : use 8x8 Icon , 1 : use 16x16 Icon.
+    ,
+    unsigned long S0_Addr // SOÍ¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short S0_W // S0Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long Des_Addr // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned int ROP_Code // ï¿½ï¿½Õ¤ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+    /*ROP_Code :
+       0000b		0(Blackness)
+       0001b		~S0!E~S1 or ~(S0+S1)
+       0010b		~S0!ES1
+       0011b		~S0
+       0100b		S0!E~S1
+       0101b		~S1
+       0110b		S0^S1
+       0111b		~S0 + ~S1 or ~(S0 + S1)
+       1000b		S0!ES1
+       1001b		~(S0^S1)
+       1010b		S1
+       1011b		~S0+S1
+       1100b		S0
+       1101b		S0+~S1
+       1110b		S0+S1
+       1111b		1(whiteness)*/
+    ,
+    unsigned short X_W // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+) {
+  if (P_8x8_or_16x16 == 0) {
+    Pattern_Format_8X8();
+  }
+  if (P_8x8_or_16x16 == 1) {
+    Pattern_Format_16X16();
+  }
 
-/* ½áºÏÀ©Õ¹É«²ÊµÄ MPU Œ‘Èë */
-void LT768_BTE_MCU_Write_ColorExpansion_MCU_16bit
-(
- unsigned long Des_Addr               // Ä¿µÄÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short Des_W                 // Ä¿µÄÍ¼ÏñµÄ¿í¶È
-,unsigned short XDes                  // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YDes                  // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned short X_W                   // »î¶¯´°¿ÚµÄ¿í¶È
-,unsigned short Y_H                   // »î¶¯´°¿ÚµÄ³¤¶È
-,unsigned long Foreground_color       // Ç°¾°É«
-/*Foreground_color : The source (1bit map picture) map data 1 translate to Foreground color by color expansion*/
-,unsigned long Background_color       // ±³¾°É«
-/*Background_color : The source (1bit map picture) map data 0 translate to Background color by color expansion*/
-,const unsigned short *data           // Êý¾Ý»º´æÊ×µØÖ·
-)
-{
-	unsigned short i,j;
-	
-	RGB_16b_16bpp();
+  BTE_S0_Color_16bpp();
+  BTE_S0_Memory_Start_Address(S0_Addr);
+  BTE_S0_Image_Width(S0_W);
+  BTE_S0_Window_Start_XY(XS0, YS0);
+
+  BTE_Destination_Color_16bpp();
+  BTE_Destination_Memory_Start_Address(Des_Addr);
+  BTE_Destination_Image_Width(Des_W);
+  BTE_Destination_Window_Start_XY(XDes, YDes);
+
+  BTE_ROP_Code(ROP_Code);
+  BTE_Operation_Code(0x06); // BTE Operation: Pattern Fill with ROP.
+  BTE_Window_Size(X_W, Y_H);
+  BTE_Enable();
+  Check_BTE_Busy();
+}
+
+void LT768_BTE_Pattern_Fill_With_Chroma_key(
+    unsigned char P_8x8_or_16x16 // 0 : use 8x8 Icon , 1 : use 16x16 Icon.
+    ,
+    unsigned long S0_Addr // SOÍ¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short S0_W // S0Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long Des_Addr // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned int ROP_Code // ï¿½ï¿½Õ¤ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+    /*ROP_Code :
+       0000b		0(Blackness)
+       0001b		~S0!E~S1 or ~(S0+S1)
+       0010b		~S0!ES1
+       0011b		~S0
+       0100b		S0!E~S1
+       0101b		~S1
+       0110b		S0^S1
+       0111b		~S0 + ~S1 or ~(S0 + S1)
+       1000b		S0!ES1
+       1001b		~(S0^S1)
+       1010b		S1
+       1011b		~S0+S1
+       1100b		S0
+       1101b		S0+~S1
+       1110b		S0+S1
+       1111b		1(whiteness)*/
+    ,
+    unsigned long Background_color // Í¸ï¿½ï¿½É«
+    ,
+    unsigned short X_W // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+) {
+  Background_color_65k(Background_color);
+
+  if (P_8x8_or_16x16 == 0) {
+    Pattern_Format_8X8();
+  }
+  if (P_8x8_or_16x16 == 1) {
+    Pattern_Format_16X16();
+  }
+
+  BTE_S0_Color_16bpp();
+  BTE_S0_Memory_Start_Address(S0_Addr);
+  BTE_S0_Image_Width(S0_W);
+  BTE_S0_Window_Start_XY(XS0, YS0);
+
+  BTE_Destination_Color_16bpp();
+  BTE_Destination_Memory_Start_Address(Des_Addr);
+  BTE_Destination_Image_Width(Des_W);
+  BTE_Destination_Window_Start_XY(XDes, YDes);
+
+  BTE_ROP_Code(ROP_Code);
+  BTE_Operation_Code(0x07); // BTE Operation: Pattern Fill with Chroma key.
+  BTE_Window_Size(X_W, Y_H);
+  BTE_Enable();
+  Check_BTE_Busy();
+}
+
+void LT768_BTE_MCU_Write_MCU_16bit(
+    unsigned long S1_Addr // S1Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short S1_W // S1Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XS1 // S1Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YS1 // S1Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long Des_Addr // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned int ROP_Code // ï¿½ï¿½Õ¤ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+    /*ROP_Code :
+       0000b		0(Blackness)
+       0001b		~S0!E~S1 or ~(S0+S1)
+       0010b		~S0!ES1
+       0011b		~S0
+       0100b		S0!E~S1
+       0101b		~S1
+       0110b		S0^S1
+       0111b		~S0 + ~S1 or ~(S0 + S1)
+       1000b		S0!ES1
+       1001b		~(S0^S1)
+       1010b		S1
+       1011b		~S0+S1
+       1100b		S0
+       1101b		S0+~S1
+       1110b		S0+S1
+       1111b		1(whiteness)*/
+    ,
+    unsigned short X_W // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+    ,
+    const unsigned short* data // S0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned short i, j;
+
+  BTE_S1_Color_16bpp();
+  BTE_S1_Memory_Start_Address(S1_Addr);
+  BTE_S1_Image_Width(S1_W);
+  BTE_S1_Window_Start_XY(XS1, YS1);
+
+  BTE_Destination_Color_16bpp();
+  BTE_Destination_Memory_Start_Address(Des_Addr);
+  BTE_Destination_Image_Width(Des_W);
+  BTE_Destination_Window_Start_XY(XDes, YDes);
+
+  BTE_Window_Size(X_W, Y_H);
+  BTE_ROP_Code(ROP_Code);
+  BTE_Operation_Code(0x00); // BTE Operation: MPU Write with ROP.
+  BTE_Enable();
+
+  BTE_S0_Color_16bpp();
+  LCD_CmdWrite(0x04); // Memory Data Read/Write Port
+
+  // MCU_16bit_ColorDepth_16bpp
+  for (i = 0; i < Y_H; i++) {
+    for (j = 0; j < (X_W); j++) {
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite_Pixel((*data));
+      data++;
+    }
+  }
+  Check_Mem_WR_FIFO_Empty();
+  Check_BTE_Busy();
+}
+
+void LT768_BTE_MCU_Write_Chroma_key_MCU_16bit(
+    unsigned long Des_Addr // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long Background_color // Í¸ï¿½ï¿½É«
+    ,
+    unsigned short X_W // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+    ,
+    const unsigned short* data // S0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½Ö·
+) {
+  unsigned int i, j;
+
+  Background_color_65k(Background_color);
+
+  BTE_Destination_Color_16bpp();
+  BTE_Destination_Memory_Start_Address(Des_Addr);
+  BTE_Destination_Image_Width(Des_W);
+  BTE_Destination_Window_Start_XY(XDes, YDes);
+
+  BTE_Window_Size(X_W, Y_H);
+  BTE_Operation_Code(0x04); // BTE Operation: MPU Write with chroma keying (w/o ROP)
+  BTE_Enable();
+
+  BTE_S0_Color_16bpp();
+  LCD_CmdWrite(0x04); // Memory Data Read/Write Port
+
+  // MCU_16bit_ColorDepth_16bpp
+  for (i = 0; i < Y_H; i++) {
+    for (j = 0; j < (X_W); j++) {
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite_Pixel((*data));
+      data++;
+    }
+  }
+  Check_Mem_WR_FIFO_Empty();
+  Check_BTE_Busy();
+}
+
+/* ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹É«ï¿½Êµï¿½ MPU ï¿½ï¿½ï¿½ï¿½ */
+void LT768_BTE_MCU_Write_ColorExpansion_MCU_16bit(
+    unsigned long Des_Addr // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short X_W // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+    ,
+    unsigned long Foreground_color // Ç°ï¿½ï¿½É«
+    /*Foreground_color : The source (1bit map picture) map data 1 translate to Foreground color by color expansion*/
+    ,
+    unsigned long Background_color // ï¿½ï¿½ï¿½ï¿½É«
+    /*Background_color : The source (1bit map picture) map data 0 translate to Background color by color expansion*/
+    ,
+    const unsigned short* data // ï¿½ï¿½ï¿½Ý»ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned short i, j;
+
+  RGB_16b_16bpp();
   Foreground_color_65k(Foreground_color);
   Background_color_65k(Background_color);
-	BTE_ROP_Code(15);
-	
-	BTE_Destination_Color_16bpp();
-	BTE_Destination_Memory_Start_Address(Des_Addr);
-  BTE_Destination_Image_Width(Des_W);
-  BTE_Destination_Window_Start_XY(XDes,YDes);
-	
+  BTE_ROP_Code(15);
 
-  BTE_Window_Size(X_W,Y_H);
-  BTE_Operation_Code(0x8);		//BTE Operation: MPU Write with Color Expansion (w/o ROP)
-  BTE_Enable();
-	
-	LCD_CmdWrite(0x04);				 		//Memory Data Read/Write Port  
-	for(i=0;i< Y_H;i++)
-  {	
-	  for(j=0;j< X_W/16;j++)
- 	  {
-	    Check_Mem_WR_FIFO_not_Full();
-		  LCD_DataWrite_Pixel(*data);  
-	    data++;
-	  }
-  }
-  Check_Mem_WR_FIFO_Empty();
-	Check_BTE_Busy();
-}
-
-/* ½áºÏÀ©Õ¹É«²ÊÓë Chroma key µÄ MPU Œ‘Èë */
-void LT768_BTE_MCU_Write_ColorExpansion_Chroma_key_MCU_16bit
-(
- unsigned long Des_Addr            // Ä¿µÄÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
-,unsigned short Des_W              // Ä¿µÄÍ¼ÏñµÄ¿í¶È
-,unsigned short XDes               // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
-,unsigned short YDes               // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½Y×ø±ê
-,unsigned short X_W                // »î¶¯´°¿ÚµÄ¿í¶È
-,unsigned short Y_H                // »î¶¯´°¿ÚµÄ³¤¶È
-,unsigned long Foreground_color    // Ç°¾°É«
-/*Foreground_color : The source (1bit map picture) map data 1 translate to Foreground color by color expansion*/
-,const unsigned short *data        // Êý¾Ý»º´æÊ×µØÖ·
-)
-{
-	unsigned short i,j;
-	
-	RGB_16b_16bpp();
-  Foreground_color_65k(Foreground_color);
-	BTE_ROP_Code(15);
-	
-	BTE_Destination_Color_16bpp();
-	BTE_Destination_Memory_Start_Address(Des_Addr);
-  BTE_Destination_Image_Width(Des_W);
-  BTE_Destination_Window_Start_XY(XDes,YDes);
-	
-
-  BTE_Window_Size(X_W,Y_H);
-	BTE_Operation_Code(0x9);		//BTE Operation: MPU Write with Color Expansion and chroma keying (w/o ROP)
-  BTE_Enable();
-	
-	LCD_CmdWrite(0x04);				 		//Memory Data Read/Write Port  
-	for(i=0;i< Y_H;i++)
-  {	
-	  for(j=0;j< X_W/16;j++)
- 	  {
-	    Check_Mem_WR_FIFO_not_Full();
-		  LCD_DataWrite_Pixel(*data);  
-	    data++;
-	  }
-  }
-  Check_Mem_WR_FIFO_Empty();
-	Check_BTE_Busy();
-}
-
-/* ½áºÏÍ¸Ã÷¶ÈµÄÄÚ´æ¸´ÖÆ */
-void BTE_Alpha_Blending
-(
- unsigned long S0_Addr         // SOÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
- ,unsigned short S0_W          // S0Í¼ÏñµÄ¿í¶È
- ,unsigned short XS0           // S0Í¼ÏñµÄ×óÉÏ·½X×ø±ê
- ,unsigned short YS0           // S0Í¼ÏñµÄ×óÉÏ·½Y×ø±ê
- ,unsigned long S1_Addr        // S1Í¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
- ,unsigned short S1_W          // S1Í¼ÏñµÄ¿í¶È
- ,unsigned short XS1           // S1Í¼ÏñµÄ×óÉÏ·½X×ø±ê
- ,unsigned short YS1           // S1Í¼ÏñµÄ×óÉÏ·½Y×ø±ê
- ,unsigned long Des_Addr       // Ä¿µÄÍ¼ÏñµÄÄÚ´æÆðÊ¼µØÖ·
- ,unsigned short Des_W         // Ä¿µÄÍ¼ÏñµÄ¿í¶È
- ,unsigned short XDes          // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
- ,unsigned short YDes          // Ä¿µÄÍ¼ÏñµÄ×óÉÏ·½X×ø±ê
- ,unsigned short X_W           // »î¶¯´°¿ÚµÄ¿í¶È
- ,unsigned short Y_H           // »î¶¯´°¿ÚµÄ³¤¶È
- ,unsigned char alpha          // Í¸Ã÷¶ÈµÈ¼¶£¨32µÈ¼¶£©
-)
-{	
-	BTE_S0_Color_16bpp();
-  BTE_S0_Memory_Start_Address(S0_Addr);
-  BTE_S0_Image_Width(S0_W);
-  BTE_S0_Window_Start_XY(XS0,YS0);
-
-	BTE_S1_Color_16bpp();
-  BTE_S1_Memory_Start_Address(S1_Addr);
-  BTE_S1_Image_Width(S1_W); 
-  BTE_S1_Window_Start_XY(XS1,YS1);
-
-	BTE_Destination_Color_16bpp();
+  BTE_Destination_Color_16bpp();
   BTE_Destination_Memory_Start_Address(Des_Addr);
   BTE_Destination_Image_Width(Des_W);
-  BTE_Destination_Window_Start_XY(XDes,YDes);
+  BTE_Destination_Window_Start_XY(XDes, YDes);
 
-  BTE_Window_Size(X_W,Y_H);
-  BTE_Operation_Code(0x0A);		//BTE Operation: Memory write with opacity (w/o ROP)
+  BTE_Window_Size(X_W, Y_H);
+  BTE_Operation_Code(0x8); // BTE Operation: MPU Write with Color Expansion (w/o ROP)
+  BTE_Enable();
+
+  LCD_CmdWrite(0x04); // Memory Data Read/Write Port
+  for (i = 0; i < Y_H; i++) {
+    for (j = 0; j < X_W / 16; j++) {
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite_Pixel(*data);
+      data++;
+    }
+  }
+  Check_Mem_WR_FIFO_Empty();
+  Check_BTE_Busy();
+}
+
+/* ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹É«ï¿½ï¿½ï¿½ï¿½ Chroma key ï¿½ï¿½ MPU ï¿½ï¿½ï¿½ï¿½ */
+void LT768_BTE_MCU_Write_ColorExpansion_Chroma_key_MCU_16bit(
+    unsigned long Des_Addr // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short X_W // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+    ,
+    unsigned long Foreground_color // Ç°ï¿½ï¿½É«
+    /*Foreground_color : The source (1bit map picture) map data 1 translate to Foreground color by color expansion*/
+    ,
+    const unsigned short* data // ï¿½ï¿½ï¿½Ý»ï¿½ï¿½ï¿½ï¿½×µï¿½Ö·
+) {
+  unsigned short i, j;
+
+  RGB_16b_16bpp();
+  Foreground_color_65k(Foreground_color);
+  BTE_ROP_Code(15);
+
+  BTE_Destination_Color_16bpp();
+  BTE_Destination_Memory_Start_Address(Des_Addr);
+  BTE_Destination_Image_Width(Des_W);
+  BTE_Destination_Window_Start_XY(XDes, YDes);
+
+  BTE_Window_Size(X_W, Y_H);
+  BTE_Operation_Code(0x9); // BTE Operation: MPU Write with Color Expansion and chroma keying (w/o ROP)
+  BTE_Enable();
+
+  LCD_CmdWrite(0x04); // Memory Data Read/Write Port
+  for (i = 0; i < Y_H; i++) {
+    for (j = 0; j < X_W / 16; j++) {
+      Check_Mem_WR_FIFO_not_Full();
+      LCD_DataWrite_Pixel(*data);
+      data++;
+    }
+  }
+  Check_Mem_WR_FIFO_Empty();
+  Check_BTE_Busy();
+}
+
+/* ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½Èµï¿½ï¿½Ú´æ¸´ï¿½ï¿½ */
+void BTE_Alpha_Blending(
+    unsigned long S0_Addr // SOÍ¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short S0_W // S0Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YS0 // S0Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long S1_Addr // S1Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short S1_W // S1Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XS1 // S1Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YS1 // S1Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Yï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned long Des_Addr // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+    ,
+    unsigned short Des_W // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short XDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short YDes // Ä¿ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï·ï¿½Xï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short X_W // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ¿ï¿½ï¿½ï¿½
+    ,
+    unsigned short Y_H // ï¿½î¶¯ï¿½ï¿½ï¿½ÚµÄ³ï¿½ï¿½ï¿½
+    ,
+    unsigned char alpha // Í¸ï¿½ï¿½ï¿½ÈµÈ¼ï¿½ï¿½ï¿½32ï¿½È¼ï¿½ï¿½ï¿½
+) {
+  BTE_S0_Color_16bpp();
+  BTE_S0_Memory_Start_Address(S0_Addr);
+  BTE_S0_Image_Width(S0_W);
+  BTE_S0_Window_Start_XY(XS0, YS0);
+
+  BTE_S1_Color_16bpp();
+  BTE_S1_Memory_Start_Address(S1_Addr);
+  BTE_S1_Image_Width(S1_W);
+  BTE_S1_Window_Start_XY(XS1, YS1);
+
+  BTE_Destination_Color_16bpp();
+  BTE_Destination_Memory_Start_Address(Des_Addr);
+  BTE_Destination_Image_Width(Des_W);
+  BTE_Destination_Window_Start_XY(XDes, YDes);
+
+  BTE_Window_Size(X_W, Y_H);
+  BTE_Operation_Code(0x0A); // BTE Operation: Memory write with opacity (w/o ROP)
   BTE_Alpha_Blending_Effect(alpha);
   BTE_Enable();
   Check_BTE_Busy();
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void LT768_PWM0_Init(
+    unsigned char on_off // 0ï¿½ï¿½ï¿½ï¿½Ö¹PWM0    1ï¿½ï¿½Ê¹ï¿½ï¿½PWM0
+    ,
+    unsigned char Clock_Divided // PWMÊ±ï¿½Ó·ï¿½Æµ  È¡Öµï¿½ï¿½Î§ 0~3(1,1/2,1/4,1/8)
+    ,
+    unsigned char Prescalar // Ê±ï¿½Ó·ï¿½Æµ     È¡Öµï¿½ï¿½Î§ 1~256
+    ,
+    unsigned short Count_Buffer // ï¿½ï¿½ï¿½ï¿½PWMï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short Compare_Buffer // ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½Õ±ï¿½
+) {
+  Select_PWM0();
+  Set_PWM_Prescaler_1_to_256(Prescalar);
+
+  if (Clock_Divided == 0)
+    Select_PWM0_Clock_Divided_By_1();
+  if (Clock_Divided == 1)
+    Select_PWM0_Clock_Divided_By_2();
+  if (Clock_Divided == 2)
+    Select_PWM0_Clock_Divided_By_4();
+  if (Clock_Divided == 3)
+    Select_PWM0_Clock_Divided_By_8();
+
+  Set_Timer0_Count_Buffer(Count_Buffer);
+  Set_Timer0_Compare_Buffer(Compare_Buffer);
+
+  if (on_off == 1)
+    Start_PWM0();
+  if (on_off == 0)
+    Stop_PWM0();
+}
+
+void LT768_PWM0_Duty(unsigned short Compare_Buffer) {
+  Set_Timer0_Compare_Buffer(Compare_Buffer);
+}
+
+void LT768_PWM1_Init(
+    unsigned char on_off // 0ï¿½ï¿½ï¿½ï¿½Ö¹PWM0    1ï¿½ï¿½Ê¹ï¿½ï¿½PWM0
+    ,
+    unsigned char Clock_Divided // PWMÊ±ï¿½Ó·ï¿½Æµ  È¡Öµï¿½ï¿½Î§ 0~3(1,1/2,1/4,1/8)
+    ,
+    unsigned char Prescalar // Ê±ï¿½Ó·ï¿½Æµ     È¡Öµï¿½ï¿½Î§ 1~256
+    ,
+    unsigned short Count_Buffer // ï¿½ï¿½ï¿½ï¿½PWMï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    ,
+    unsigned short Compare_Buffer // ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½Õ±ï¿½
+) {
+  Select_PWM1();
+  Set_PWM_Prescaler_1_to_256(Prescalar);
+
+  if (Clock_Divided == 0)
+    Select_PWM1_Clock_Divided_By_1();
+  if (Clock_Divided == 1)
+    Select_PWM1_Clock_Divided_By_2();
+  if (Clock_Divided == 2)
+    Select_PWM1_Clock_Divided_By_4();
+  if (Clock_Divided == 3)
+    Select_PWM1_Clock_Divided_By_8();
+
+  Set_Timer1_Count_Buffer(Count_Buffer);
+  Set_Timer1_Compare_Buffer(Compare_Buffer);
+
+  if (on_off == 1)
+    Start_PWM1();
+  if (on_off == 0)
+    Stop_PWM1();
+}
+
+void LT768_PWM1_Duty(unsigned short Compare_Buffer) {
+  Set_Timer1_Compare_Buffer(Compare_Buffer);
+}
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void LT768_PWM0_Init
-(
- unsigned char on_off                       // 0£º½ûÖ¹PWM0    1£ºÊ¹ÄÜPWM0
-,unsigned char Clock_Divided                // PWMÊ±ÖÓ·ÖÆµ  È¡Öµ·¶Î§ 0~3(1,1/2,1/4,1/8)
-,unsigned char Prescalar                    // Ê±ÖÓ·ÖÆµ     È¡Öµ·¶Î§ 1~256
-,unsigned short Count_Buffer                // ÉèÖÃPWMµÄÊä³öÖÜÆÚ
-,unsigned short Compare_Buffer              // ÉèÖÃÕ¼¿Õ±È
-)
-{
-	 Select_PWM0();
-   Set_PWM_Prescaler_1_to_256(Prescalar);
-
-	if(Clock_Divided ==0)	Select_PWM0_Clock_Divided_By_1();
-	if(Clock_Divided ==1)	Select_PWM0_Clock_Divided_By_2();
-	if(Clock_Divided ==2)	Select_PWM0_Clock_Divided_By_4();
-	if(Clock_Divided ==3) Select_PWM0_Clock_Divided_By_8();
-
-	Set_Timer0_Count_Buffer(Count_Buffer);  
-	Set_Timer0_Compare_Buffer(Compare_Buffer);	
-		
-	if (on_off == 1)	Start_PWM0(); 
-	if (on_off == 0)	Stop_PWM0();
+// LT768ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+void LT768_Standby(void) {
+  Power_Saving_Standby_Mode();
+  Check_Power_is_Saving();
+}
+// ï¿½Ó´ï¿½ï¿½ï¿½Ä£Ê½ï¿½Ð»ï¿½ï¿½ï¿½
+void LT768_Wkup_Standby(void) {
+  Power_Normal_Mode();
+  Check_Power_is_Normal();
 }
 
-
-void LT768_PWM0_Duty(unsigned short Compare_Buffer)
-{
-	Set_Timer0_Compare_Buffer(Compare_Buffer);
+// LT768ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ä£Ê½
+void LT768_Suspend(void) {
+  LT768_SDRAM_initail(10);
+  Power_Saving_Suspend_Mode();
+  Check_Power_is_Saving();
+}
+// ï¿½ï¿½ï¿½ï¿½Í£Ä£Ê½ï¿½Ð»ï¿½ï¿½ï¿½
+void LT768_Wkup_Suspend(void) {
+  Power_Normal_Mode();
+  Check_Power_is_Normal();
+  LT768_SDRAM_initail(MCLK);
 }
 
-
-
-void LT768_PWM1_Init
-(
- unsigned char on_off                       // 0£º½ûÖ¹PWM0    1£ºÊ¹ÄÜPWM0
-,unsigned char Clock_Divided                // PWMÊ±ÖÓ·ÖÆµ  È¡Öµ·¶Î§ 0~3(1,1/2,1/4,1/8)
-,unsigned char Prescalar                    // Ê±ÖÓ·ÖÆµ     È¡Öµ·¶Î§ 1~256
-,unsigned short Count_Buffer                // ÉèÖÃPWMµÄÊä³öÖÜÆÚ
-,unsigned short Compare_Buffer              // ÉèÖÃÕ¼¿Õ±È
-)
-{
-	Select_PWM1();
-	Set_PWM_Prescaler_1_to_256(Prescalar);
- 
-	if(Clock_Divided ==0)	Select_PWM1_Clock_Divided_By_1();
-	if(Clock_Divided ==1)	Select_PWM1_Clock_Divided_By_2();
-	if(Clock_Divided ==2) 	Select_PWM1_Clock_Divided_By_4();
-	if(Clock_Divided ==3)	Select_PWM1_Clock_Divided_By_8();
-
-	Set_Timer1_Count_Buffer(Count_Buffer); 
-	Set_Timer1_Compare_Buffer(Compare_Buffer); 
-
-	if (on_off == 1)	Start_PWM1(); 
-	if (on_off == 0)	Stop_PWM1();
+// LT768ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+void LT768_SleepMode(void) {
+  Power_Saving_Sleep_Mode();
+  Check_Power_is_Saving();
 }
-
-
-void LT768_PWM1_Duty(unsigned short Compare_Buffer)
-{
-	Set_Timer1_Compare_Buffer(Compare_Buffer);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-// LT768½øÈë´ýÃüÄ£Ê½
-void LT768_Standby(void)
-{
-	Power_Saving_Standby_Mode();
-	Check_Power_is_Saving();
-}
-// ´Ó´ýÃüÄ£Ê½ÖÐ»½ÐÑ
-void LT768_Wkup_Standby(void)
-{
-	Power_Normal_Mode();
-	Check_Power_is_Normal();
-}
-
-
-// LT768½øÈëÔÝÍ£Ä£Ê½
-void LT768_Suspend(void)
-{
-	LT768_SDRAM_initail(10);
-	Power_Saving_Suspend_Mode();
-	Check_Power_is_Saving();
-}
-// ´ÓÔÝÍ£Ä£Ê½ÖÐ»½ÐÑ
-void LT768_Wkup_Suspend(void)
-{
-	Power_Normal_Mode();
-	Check_Power_is_Normal();
-	LT768_SDRAM_initail(MCLK);
-}
-
-
-// LT768½øÈëÐÝÃßÄ£Ê½
-void LT768_SleepMode(void)
-{
-	Power_Saving_Sleep_Mode();
-	Check_Power_is_Saving();
-}
-// ´ÓÐÝÃßÄ£Ê½ÖÐ»½ÐÑ
-void LT768_Wkup_Sleep(void)
-{
-	Power_Normal_Mode();
-	Check_Power_is_Normal();
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½Ð»ï¿½ï¿½ï¿½
+void LT768_Wkup_Sleep(void) {
+  Power_Normal_Mode();
+  Check_Power_is_Normal();
 }
 //-------------------------------------------------------------------------------------------------------------------------------
 
-
 #endif
-
-

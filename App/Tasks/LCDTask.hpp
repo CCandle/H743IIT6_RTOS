@@ -34,7 +34,7 @@ public:
     Active_Window_WH(4000, 1200);
     // LT768_DrawSquare_Fill(120, 50, 250, 200, color65k_red);
   }
-  
+
   void Run() {
     Parallel_Init();
     LT768_Init();
@@ -42,23 +42,27 @@ public:
     vTaskDelay(pdMS_TO_TICKS(300));
 
     Display_ON();
-    StartUp_picture();
+    // StartUp_picture();
+    Select_Main_Window_24bpp();
 
     vTaskDelay(pdMS_TO_TICKS(300));
 
     LT768_PWM1_Init(1, 0, 50, 100, 100);
 
-    Load_Drow_Dialog();
+    // Load_Drow_Dialog();
 
     while (1) {
       // Fill the screen with red, green and blue with rectangular function
-      LT768_DrawSquare_Fill(0, 0, LCD_XSIZE_TFT, LCD_YSIZE_TFT, Red);
+      LT768_DrawSquare_Fill(0, 0, LCD_XSIZE_TFT, LCD_YSIZE_TFT, color16M_red);
       delay_ms(1000);
 
-      LT768_DrawSquare_Fill(0, 0, LCD_XSIZE_TFT, LCD_YSIZE_TFT, Green);
+      LT768_DrawSquare_Fill(0, 0, LCD_XSIZE_TFT, LCD_YSIZE_TFT, color16M_green);
       delay_ms(1000);
 
-      LT768_DrawSquare_Fill(0, 0, LCD_XSIZE_TFT, LCD_YSIZE_TFT, Blue);
+      LT768_DrawSquare_Fill(0, 0, LCD_XSIZE_TFT, LCD_YSIZE_TFT, color16M_blue);
+      delay_ms(1000);
+
+      LT768_DrawCircleSquare(200, 30, 500, 20, 10, 10, 0x00f0f0f0);
       delay_ms(1000);
     }
   }

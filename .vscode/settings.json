@@ -83,7 +83,9 @@
     "if_port.h": "c",
     "sys.h": "c",
     "stm32h7xx.h": "c",
-    "stm32h743xx.h": "c"
+    "stm32h743xx.h": "c",
+    "main.h": "c",
+    "stm32h7xx_hal.h": "c"
   },
   "cortex-debug.variableUseNaturalFormat": false
 }
