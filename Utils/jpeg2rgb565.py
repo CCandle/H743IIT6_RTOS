@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 
-def jpeg_to_c_array(input_image_path, output_file_path, width=100, height=100):
+def jpeg_to_c_array(input_image_path, output_file_path, width=200, height=120):
     """
     将JPEG图片压缩并转换为C风格的unsigned short二维数组
     
@@ -62,17 +62,17 @@ def generate_c_code(array, output_path, width, height):
         f.write(" */\n\n")
         
         # 写入数组定义
-        f.write(f"const unsigned short image_data[{height}][{width}] = {{\n")
+        f.write(f"const unsigned short image_data[{height} * {width}] = {{\n")
         
         # 写入每一行数据
         for i in range(height):
-            f.write("    {")
+            f.write("    ")
             for j in range(width):
                 # 写入像素值（十六进制格式）
                 f.write(f"0x{array[i, j]:04X}")
                 if j < width - 1:
                     f.write(", ")
-            f.write("}")
+            f.write("")
             if i < height - 1:
                 f.write(",")
             f.write("\n")
