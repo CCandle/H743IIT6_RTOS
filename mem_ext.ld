@@ -27,7 +27,7 @@ SECTIONS
     
     . = ABSOLUTE(0x30040100); 
     *(.Rx_PoolSection)   
-  } >RAM_D2 
+  } >SRAM3 
   /* ======================= ITCM ======================================== */
   /* Highest-speed instruction memory, CPU-only (not for data)            */
   .itcm.code : ALIGN(16)
@@ -101,7 +101,7 @@ SECTIONS
     KEEP(*(.d2.data*))
     . = ALIGN(8);
     __end_d2_data = .;
-  } >RAM_D2
+  } >SRAM1
 
   .d2.bss (NOLOAD) : ALIGN(8)
   {
@@ -112,7 +112,7 @@ SECTIONS
     *(.d2.bss*)
     . = ALIGN(8);
     __end_d2_bss = .;
-  } >RAM_D2
+  } >SRAM1
 
   /* ======================= D3 SRAM ===================================== */
   /* Shared or retained memory (low-speed, for system states)             */
@@ -137,4 +137,23 @@ SECTIONS
     . = ALIGN(8);
     __end_d3_bss = .;
   } >RAM_D3
+
+  /* SRAM2 initialized data: RUN in SRAM2, LOAD from FLASH */
+  .sram2.data : ALIGN(4)
+  {
+      __sram2_data_start = .;
+      KEEP(*(.sram2.data))
+      KEEP(*(.sram2.data*))
+      __sram2_data_end = .;
+  } >SRAM2 AT> FLASH
+
+  /* Flash load address */
+  __sram2_data_source = LOADADDR(.sram2.data);
+
+  /* Sizes */
+  PROVIDE(__sram2_data_start = ADDR(.sram2.data));
+  PROVIDE(__sram2_data_end = ADDR(.sram2.data) + SIZEOF(.sram2.data));
+  PROVIDE(__sram2_data_source = LOADADDR(.sram2.data));
+
+
 }

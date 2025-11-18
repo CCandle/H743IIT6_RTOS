@@ -11,10 +11,9 @@
 */
 
 #include "if_port.h"
+#include "gpio.h"
 #include "main.h"
 #include "spi.h"
-#include "main.h"
-#include "gpio.h"
 
 void SPI_CS_choosed() { HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET); }
 void SPI_CS_chooseless() { HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET); }
@@ -50,7 +49,7 @@ void SPI2_Init(void) {
 u8 SPI2_ReadWriteByte(u8 txdata) {
   uint8_t RxData;
   HAL_SPI_TransmitReceive(&hspi2, &txdata, &RxData, 1, HAL_MAX_DELAY);
-   return RxData;
+  return RxData;
 }
 
 void SPI_CmdWrite(u8 cmd) {
