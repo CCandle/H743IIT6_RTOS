@@ -27,6 +27,9 @@ set(CMAKE_PROJECT_NAME IIT6_eth_rtos)
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
+set(LV_CONF_INCLUDE_SIMPLE ON)
+set(LV_CONF_PATH "${CMAKE_SOURCE_DIR}/lv_conf.h")
+
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
@@ -39,6 +42,7 @@ add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
+add_subdirectory(lvgl)
 add_subdirectory(App)
 add_subdirectory(LCD_Drivers)
 
@@ -73,6 +77,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     # Add user defined libraries
     App
     LCD_Drivers
+    lvgl
 )
 
 set(EXTRA_LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/mem_ext.ld")

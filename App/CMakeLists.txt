@@ -55,4 +55,5 @@ target_compile_options(App PRIVATE
 target_link_libraries(App PUBLIC
     stm32cubemx
     LCD_Drivers
+    lvgl
 )
