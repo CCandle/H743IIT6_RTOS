@@ -4,40 +4,30 @@
 // #include "lt7680.hpp"
 // #include "lt7680_if.hpp"
 #include "LT768_Lib.h"
-#include "jpg.h"
+// #include "jpg.h"
 #include "main.h"
 #include "spi.h"
 
-#define LCD_CS_Pin GPIO_PIN_12
-#define LCD_CS_GPIO_Port GPIOB
-#define LCD_NRST_Pin GPIO_PIN_11
-#define LCD_NRST_GPIO_Port GPIOD
-
-// __attribute__((section(".sram2.data.testPic2"))) static unsigned short testPic2[100 * 100] = {0xf800};
+#define ROW 96
+__attribute__((section(".axi.data.testPic2"),aligned(32))) static uint16_t testPic2[800 * ROW];
 
 // void lcd_delay(uint32_t ms) { vTaskDelay(pdMS_TO_TICKS(ms)); }
 
 class LCDTask : public RAM_D2Task<LCDTask, 1024> {
 public:
-  void StartUp_picture(void) {
+  void Run() {
+    Parallel_Init();
+    LT768_Init();
+    delay_ms(100);
+    Display_ON();
+
     Select_Main_Window_16bpp();
     Main_Image_Start_Address(0);
     Main_Image_Width(LCD_XSIZE_TFT);
     Main_Window_Start_XY(0, 0);
-    Canvas_Image_Start_address(800 * 480 * 8);
-    Canvas_image_width(LCD_XSIZE_TFT);
-    // Active_Window_XY(0, 0);
-    // Active_Window_WH(LCD_XSIZE_TFT, LCD_YSIZE_TFT);
-  }
 
-  void Run() {
-    Parallel_Init();
-    LT768_Init();
-
-    delay_ms(100);
-
-    Display_ON();
-    StartUp_picture();
+    Active_Window_XY(0, 0);
+    Active_Window_WH(LCD_XSIZE_TFT, LCD_YSIZE_TFT);
 
     delay_ms(100);
 
@@ -51,30 +41,49 @@ public:
     Canvas_image_width(LCD_XSIZE_TFT);
     uint32_t dest_base = 0;
 
+    uint16_t color = 0x0000;
+    uint16_t row = 0;
+
     while (1) {
-      BTE_Disable();
-      LT768_DrawSquare_Fill(0, 0, LCD_XSIZE_TFT, LCD_YSIZE_TFT, color65k_blue);
-      LT768_BTE_Memory_Copy(canvas_base, 800, 0, 0, 0, 800, 0, 0, dest_base, 800, 0, 0, 0b1100, 800, 480);
-      delay_ms(10);
+      // BTE_Disable();
+      // LT768_DrawSquare_Fill(0, 0, LCD_XSIZE_TFT, LCD_YSIZE_TFT, color65k_blue);
+      // LT768_BTE_Memory_Copy(canvas_base, 800, 0, 0, 0, 800, 0, 0, dest_base, 800, 0, 0, 0b1100, 800, 480);
+      // delay_ms(1000);
 
-      BTE_Write_fixed(
-          canvas_base,   // s0 canvas base (bytes)
-          LCD_XSIZE_TFT, // s0 width in pixels (canvas stride)
-          0, 0,          // s0_x, s0_y in canvas
-          canvas_base,   // destination base byte address
-          LCD_XSIZE_TFT, // dest width in pixels
-          200, 120,      // dest window start (ignored when using absolute des_addr; vendor expects base+window, but many code uses base plus window)
-          0x0C,          // ROP = S0 (copy)
-          testPic,
-          200, 120 // 1width, height of block to write
-      );
+      // BTE_Write_fixed(
+      //     canvas_base,   // s0 canvas base (bytes)
+      //     LCD_XSIZE_TFT, // s0 width in pixels (canvas stride)
+      //     0, 0,          // s0_x, s0_y in canvas
+      //     canvas_base,   // destination base byte address
+      //     LCD_XSIZE_TFT, // dest width in pixels
+      //     200, 120,      // dest window start (ignored when using absolute des_addr; vendor expects base+window, but many code uses base plus window)
+      //     0x0C,          // ROP = S0 (copy)
+      //     testPic2,
+      //     200, 120 // 1width, height of block to write
+      // );
 
-      LT768_BTE_Memory_Copy(canvas_base, 800, 0, 0, 0, 800, 0, 0, dest_base, 800, 0, 0, 0b1100, 800, 480);
-      delay_ms(10);
+      LT7680_DrawBitmap_DMA(canvas_base, 0, row * ROW, 800, ROW, (uint8_t*)testPic2);
+      // delay_ms(100);
+      // color = 0xffff;
+      row += 1;
+      row %= 480 / ROW;
+      if (!row) {
+        color += 0b0010000010000100;
+        for (int i = 0; i < 800 * ROW; i++) {
+          testPic2[i] = color;
+        }
+        SCB_InvalidateDCache_by_Addr(testPic2, 800 * ROW * 2);
+        LT768_BTE_Memory_Copy(canvas_base, 800, 0, 0, 0, 800, 0, 0, dest_base, 800, 0, 0, 0b1100, 800, 480);
+      }
     }
   }
 
 private:
+  void LT7680_DrawBitmap_DMA(uint32_t canvas_base,
+                             uint16_t X1, uint16_t Y1,
+                             uint16_t x_w, uint16_t y_h,
+                             const uint8_t* fdata);
+
   static void delay_ms(uint32_t ms) {
     vTaskDelay(pdMS_TO_TICKS(ms));
   }

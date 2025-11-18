@@ -41,8 +41,7 @@ void System_Check_Temp(void) {
       {
         system_ok = 1;
         i = 0;
-      }
-      else {
+      } else {
         vTaskDelay(pdMS_TO_TICKS(100)); // ��MCU �ٶ�̫�죬��Ҫ�rʹ��
         LCD_CmdWrite(0x01);
         vTaskDelay(pdMS_TO_TICKS(100)); // ��MCU �ٶ�̫�죬��Ҫ�rʹ��
@@ -243,38 +242,23 @@ void Set_LCD_Panel(void) {
 #endif
 
   //**[02h]**//
-  // RGB_16b_16bpp();
-  RGB_16b_24bpp_mode1();
-  // RGB_16b_24bpp_mode2();
-  MemWrite_Down_Top_Left_Right();
-  // MemWrite_Down_Top_Left_Right();
+  RGB_16b_16bpp();
+  MemWrite_Left_Right_Top_Down();
 
   //**[03h]**//
   Graphic_Mode();
   Memory_Select_SDRAM();
 
   PCLK_Falling(); // REG[12h]:�½���
-  // PCLK_Rising();
 
   VSCAN_T_to_B(); // REG[12h]:���ϵ���
-  // VSCAN_B_to_T();				//���µ���
   HSCAN_L_to_R();
 
   PDATA_Set_RGB(); // REG[12h]:Select RGB output
-  // PDATA_Set_RBG();
-  // PDATA_Set_GRB();
-  // PDATA_Set_GBR();
-  // PDATA_Set_BRG();
-  // PDATA_Set_BGR();
 
   HSYNC_Low_Active(); // REG[13h]:
-  // HSYNC_High_Active();
-
   VSYNC_Low_Active(); // REG[13h]:
-  // VSYNC_High_Active();
-
   DE_High_Active(); // REG[13h]:
-  // DE_Low_Active();
 
   LCD_HorizontalWidth_VerticalHeight(LCD_XSIZE_TFT, LCD_YSIZE_TFT);
   LCD_Horizontal_Non_Display(LCD_HBPD);
@@ -284,9 +268,9 @@ void Set_LCD_Panel(void) {
   LCD_VSYNC_Start_Position(LCD_VFPD);
   LCD_VSYNC_Pulse_Width(LCD_VSPW);
 
-  Memory_XY_Mode(); // Block mode (X-Y coordination addressing);��ģʽ
-  // Memory_16bpp_Mode();
-  Memory_24bpp_Mode();
+  // Memory_XY_Mode();
+  Memory_Linear_Mode();
+  Memory_16bpp_Mode();
 }
 
 void LT768_initial(void) {
