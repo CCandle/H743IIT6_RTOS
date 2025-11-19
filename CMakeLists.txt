@@ -27,8 +27,11 @@ set(CMAKE_PROJECT_NAME IIT6_eth_rtos)
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-set(LV_CONF_INCLUDE_SIMPLE ON)
-set(LV_CONF_PATH "${CMAKE_SOURCE_DIR}/lv_conf.h")
+# set(LV_CONF_INCLUDE_SIMPLE ON)
+# set(LV_CONF_PATH "lv_conf.h")
+set(LV_BUILD_CONF_PATH "./lv_conf.h")
+set(CONFIG_LV_BUILD_EXAMPLES OFF)
+set(CONFIG_LV_BUILD_DEMOS OFF)
 
 # Core project settings
 project(${CMAKE_PROJECT_NAME})

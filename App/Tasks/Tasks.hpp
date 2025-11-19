@@ -1,6 +1,6 @@
 #pragma once
-#include "Tasks/UDPTask.hpp"
 #include "Tasks/LCDTask.hpp"
+#include "Tasks/UDPTask.hpp"
 
 namespace Tasks {
 

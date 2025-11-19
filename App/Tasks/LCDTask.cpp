@@ -71,100 +71,139 @@ void LCDTask::UpdateTestPictureBuffer(uint16_t color) {
     pixel = color;
   }
 }
-
-void LCDTask::DrawBitmapDMA(uint32_t canvas_base, uint16_t x, uint16_t y,
-                            uint16_t width, uint16_t height, const uint8_t* bitmap_data) {
-  const uint32_t total_pixels = static_cast<uint32_t>(width) * static_cast<uint32_t>(height);
-  if (total_pixels == 0 || bitmap_data == nullptr)
+void LCDTask::DrawBitmapDMA(uint32_t canvas_base,
+                            uint16_t x, uint16_t y,
+                            uint16_t width, uint16_t height,
+                            const uint8_t* bitmap_data) {
+  if (width == 0 || height == 0 || bitmap_data == nullptr)
     return;
 
-  const uint32_t linear_address = canvas_base + (static_cast<uint32_t>(y) * LCD_WIDTH + x) * 2u;
-  Goto_Linear_Addr(linear_address);
-  LCD_CmdWrite(0x04);
-  SPI_CS_choosed();
-  SPI2_ReadWriteByte(0x80);
+  const uint32_t bytes_per_line = width * 2;
+  const uint8_t* line_ptr = bitmap_data;
 
-  constexpr uint32_t bytes_per_pixel = 2;
-  const uint32_t bytes_per_line = static_cast<uint32_t>(width) * bytes_per_pixel;
-  constexpr uint16_t max_lines_per_block = 40;
+  // 预清理整块缓存 (减少多次清理)
+  LCDTask::clean_dcache_for_range(bitmap_data, bytes_per_line * height);
 
-  uint32_t remaining_lines = height;
-  uint32_t current_line = 0;
-  const uint8_t* current_data = bitmap_data;
+  for (uint16_t row = 0; row < height; row++) {
+    // 计算此行在显存中的线性地址
+    uint32_t addr = canvas_base + ((uint32_t)(y + row) * LCD_WIDTH + x) * 2;
 
-  while (remaining_lines > 0) {
-    uint16_t lines_to_send = (remaining_lines > max_lines_per_block) ? max_lines_per_block : static_cast<uint16_t>(remaining_lines);
-    uint32_t block_size = static_cast<uint32_t>(lines_to_send) * bytes_per_line;
+    // 设置显存写指针
+    Goto_Linear_Addr(addr);
+    LCD_CmdWrite(0x04);
 
-    // DMA 单次限制
-    const uint32_t DMA_BYTE_LIMIT = 65535u;
-    if (block_size > DMA_BYTE_LIMIT) {
-      lines_to_send = static_cast<uint16_t>(DMA_BYTE_LIMIT / bytes_per_line);
-      if (lines_to_send == 0)
-        lines_to_send = 1;
-      block_size = static_cast<uint32_t>(lines_to_send) * bytes_per_line;
+    SPI_CS_choosed();
+    SPI2_ReadWriteByte(0x80);
+
+    // 清空之前的信号量
+    if (dma_done_semaphore_ != nullptr) {
+      xSemaphoreTake(dma_done_semaphore_, 0);
     }
 
-    // 清 cache：对齐到 32 字节
-    clean_dcache_for_range(current_data, block_size);
+    // 一行 DMA 输出
+    HAL_SPI_Transmit_DMA(&hspi2,
+                         const_cast<uint8_t*>(line_ptr),
+                         bytes_per_line);
 
-    // 启动 DMA
-    // 清空之前的信号量状态（确保不会误接收旧信号）
+    // 等待 DMA 完成（无 busy-wait）
     if (dma_done_semaphore_ != nullptr) {
-      xSemaphoreTake(dma_done_semaphore_, 0); // non-blocking clear
-    }
-
-    HAL_SPI_Transmit_DMA(&hspi2, const_cast<uint8_t*>(current_data), block_size);
-
-    // 等待 DMA 完成（使用信号量替代 busy-wait）
-    if (dma_done_semaphore_ != nullptr) {
-      // 阻塞直到 DMA 完成（和原来行为等价，但更高效）
       xSemaphoreTake(dma_done_semaphore_, portMAX_DELAY);
     } else {
-      // 退回到原来的轮询方式，作为回退
       while (HAL_SPI_GetState(&hspi2) != HAL_SPI_STATE_READY) {
-        DelayMs(1);
+        __NOP();
       }
     }
 
-    // 更新指针、计数
-    current_data += block_size;
-    remaining_lines -= lines_to_send;
-    current_line += lines_to_send;
-
-    if (remaining_lines > 0) {
-      const uint32_t new_linear_address = canvas_base + ((static_cast<uint32_t>(y) + current_line) * LCD_WIDTH + x) * 2u;
-      Goto_Linear_Addr(new_linear_address);
-      LCD_CmdWrite(0x04);
-      SPI_CS_choosed();
-      SPI2_ReadWriteByte(0x80);
-    }
+    line_ptr += bytes_per_line;
   }
 }
 
 void LCDTask::Run() {
   InitializeDisplay();
 
-  uint16_t color = 0x0000;
-  uint16_t current_row = 0;
-  constexpr uint16_t total_rows = LCD_HEIGHT / ROW_HEIGHT;
+  lv_init();
+  lv_tick_set_cb(xTaskGetTickCount);
+  lv_display_t* disp = lv_display_create(800, 480);
+  lv_display_set_user_data(disp, this);
+
+  lv_display_set_buffers(disp, test_pic_buffer_, nullptr, LCD_WIDTH * ROW_HEIGHT * 2, LV_DISPLAY_RENDER_MODE_PARTIAL);
+  lv_display_set_flush_cb(disp, lcd_flush_cb_handle);
+
+  // 创建一个简单的测试UI
+  lv_obj_t* screen = lv_screen_active();
+
+  // 设置背景色以确保整个屏幕都被标记为脏区域
+  lv_obj_set_style_bg_color(screen, lv_color_hex(0xcf6560), 0);
+  lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
+
+  CreateSimpleAnimation();
+
+  // ui_init();
 
   while (true) {
-    DrawBitmapDMA(CANVAS_BASE, 0, current_row * ROW_HEIGHT,
-                  LCD_WIDTH, ROW_HEIGHT,
-                  reinterpret_cast<const uint8_t*>(test_pic_buffer_));
-
-    current_row = (current_row + 1) % total_rows;
-
-    if (current_row == 0) {
-      color += 0b0010000010000100; // 更新颜色值
-      UpdateTestPictureBuffer(color);
-
-      // Invalidate cache range before BTE copy (aligned)
-      invalidate_dcache_for_range(test_pic_buffer_, LCD_WIDTH * ROW_HEIGHT * 2u);
-
-      LT768_BTE_Memory_Copy(CANVAS_BASE, LCD_WIDTH, 0, 0, 0, LCD_WIDTH,
-                            0, 0, 0, LCD_WIDTH, 0, 0, 0b1100, LCD_WIDTH, LCD_HEIGHT);
-    }
+    lv_timer_handler();
+    DelayMs(10);
   }
+}
+
+void LCDTask::lcd_flush_cb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_buf) {
+  uint32_t w = lv_area_get_width(area);
+  uint32_t h = lv_area_get_height(area);
+  // px_buf[0] = 0x00;
+  // px_buf[1] = 0xff;
+  // px_buf[800 * 96 - 2] = 0x00;
+  // px_buf[800 * 96 - 3] = 0xf8;
+  // 清理缓存以确保数据一致性
+  LCDTask::clean_dcache_for_range(px_buf, w * h * 2u);
+
+  // 使用 DMA 绘制图像
+  LCDTask::DrawBitmapDMA(CANVAS_BASE, area->x1, area->y1, static_cast<uint16_t>(w), static_cast<uint16_t>(h), px_buf);
+  LT768_BTE_Memory_Copy(CANVAS_BASE, LCD_WIDTH, 0, 0, 0, LCD_WIDTH,
+                        0, 0, 0, LCD_WIDTH, 0, 0, 0b1100, LCD_WIDTH, LCD_HEIGHT);
+  // 通知 LVGL 刷新完成
+  lv_display_flush_ready(disp);
+}
+
+void LCDTask::lcd_flush_cb_handle(lv_display_t* disp, const lv_area_t* area, uint8_t* px_buf) {
+  LCDTask* task = static_cast<LCDTask*>(lv_display_get_user_data(disp));
+  if (task) {
+    task->lcd_flush_cb(disp, area, px_buf);
+  }
+}
+void LCDTask::CreateSimpleAnimation() {
+  lv_obj_t* screen = lv_screen_active();
+  lv_obj_set_style_bg_color(screen, lv_color_hex(0x9876bd), 0);
+
+  // 创建移动的方块
+  lv_obj_t* moving_rect = lv_obj_create(screen);
+  lv_obj_set_size(moving_rect, 50, 50);
+  lv_obj_set_style_bg_color(moving_rect, lv_color_hex(0x00FF00), 0);
+  lv_obj_set_style_radius(moving_rect, 0, 0);
+  lv_obj_set_pos(moving_rect, 0, 0);
+
+  // 使用静态变量存储动画状态
+  static int16_t x = 0;
+  static int16_t y = 0;
+  static int16_t dx = 5;
+  static int16_t dy = 3;
+
+  // 创建动画定时器 - 提供所有3个参数
+  lv_timer_create([](lv_timer_t* timer) {
+    // 更新位置
+    x += dx;
+    y += dy;
+
+    // 边界碰撞检测
+    if (x <= 0 || x >= LCD_WIDTH - 50)
+      dx = -dx;
+    if (y <= 0 || y >= LCD_HEIGHT - 60)
+      dy = -dy;
+
+    // 获取屏幕上的第一个子对象（我们的方块）
+    lv_obj_t* obj = lv_obj_get_child(lv_screen_active(), 0);
+    if (obj) {
+      lv_obj_set_pos(obj, x, y);
+    }
+  },
+                  16, nullptr); // 第三个参数是用户数据，设为nullptr
 }

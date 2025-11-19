@@ -13,7 +13,7 @@ void startTasks() {
   // if(!udp_task.Start("UDPTask", tskIDLE_PRIORITY + 1)) {
   //   TaskStartFailHandle();
   // }
-  if(!lcd_task.Start("LCDTask", configMAX_PRIORITIES - 1)) {
+  if (!lcd_task.Start("LCDTask", configMAX_PRIORITIES - 1)) {
     TaskStartFailHandle();
   }
 }

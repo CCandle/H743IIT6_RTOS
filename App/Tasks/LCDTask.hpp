@@ -3,6 +3,7 @@
 #include "FreeRTOS.h"
 #include "LT768_Lib.h"
 #include "Lib/TaskBase.hpp"
+#include "lvgl/lvgl.h"
 #include "main.h"
 #include "semphr.h"
 #include "spi.h"
@@ -19,14 +20,18 @@ public:
 private:
   static constexpr uint16_t LCD_WIDTH = 800;
   static constexpr uint16_t LCD_HEIGHT = 480;
-  static constexpr uint16_t ROW_HEIGHT = 96;
+  static constexpr uint16_t ROW_HEIGHT = 120;
   static constexpr uint32_t CANVAS_BASE = 800 * 480 * 8;
 
   // 对齐到32字节的测试缓冲区（AXI段）
-  __attribute__((section(".axi.data.testPic2"), aligned(32))) static inline uint16_t test_pic_buffer_[LCD_WIDTH * ROW_HEIGHT];
+  __attribute__((section(".axi.data.testPic2"), aligned(32))) static inline uint16_t test_pic_buffer_[LCD_WIDTH * ROW_HEIGHT * 2];
 
   // DMA 完成信号量（用于替代轮询）
   static inline SemaphoreHandle_t dma_done_semaphore_ = nullptr;
+
+  static void lcd_flush_cb_handle(lv_display_t* disp, const lv_area_t* area, uint8_t* px_buf);
+  void lcd_flush_cb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_buf);
+  void CreateSimpleAnimation();
 
   void DrawBitmapDMA(uint32_t canvas_base, uint16_t x, uint16_t y,
                      uint16_t width, uint16_t height, const uint8_t* bitmap_data);
