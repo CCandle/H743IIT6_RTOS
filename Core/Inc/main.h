@@ -59,6 +59,10 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define ETH_RST_Pin GPIO_PIN_2
 #define ETH_RST_GPIO_Port GPIOF
+#define CTP_RST_Pin GPIO_PIN_6
+#define CTP_RST_GPIO_Port GPIOH
+#define CTP_INT_Pin GPIO_PIN_7
+#define CTP_INT_GPIO_Port GPIOH
 #define LCD_CS_Pin GPIO_PIN_12
 #define LCD_CS_GPIO_Port GPIOB
 #define LCD_NRST_Pin GPIO_PIN_11
