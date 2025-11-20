@@ -21,13 +21,17 @@ void LVGLTask::clean_dcache_for_range(const void* ptr, uint32_t len) {
 /**
  * @brief 将外部创建的同步原语注入任务，必须在 Start 前调用。
  */
-void LVGLTask::InjectPrimitives(
+void LVGLTask::inject(
     QueueHandle_t& display_queue,
     SemaphoreHandle_t& buf1_sem,
-    SemaphoreHandle_t& buf2_sem) {
+    SemaphoreHandle_t& buf2_sem,
+    SemaphoreHandle_t& lvgl_ready_sem,
+    SemaphoreHandle_t& lvgl_mutex) {
   display_queue_ = display_queue;
   buf1_sem_ = buf1_sem;
   buf2_sem_ = buf2_sem;
+  lvgl_ready_sem_ = lvgl_ready_sem;
+  lvgl_mutex_ = lvgl_mutex;
 }
 
 /**
@@ -53,6 +57,10 @@ void LVGLTask::Run() {
     DelayMs(10);
   }
 
+  if (lvgl_mutex_ != nullptr) {
+    xSemaphoreTake(lvgl_mutex_, portMAX_DELAY);
+  }
+
   lv_init();
   lv_tick_set_cb(GetTickMs);
 
@@ -60,13 +68,26 @@ void LVGLTask::Run() {
   lv_display_t* disp = CreateDisplayDriver();
   (void)disp;
 
+  if (lvgl_ready_sem_ != nullptr) {
+    xSemaphoreGive(lvgl_ready_sem_);
+  }
+
+  if (lvgl_mutex_ != nullptr) {
+    xSemaphoreGive(lvgl_mutex_);
+  }
+
 #if LVGL_TEST_ANIMATION
   CreateTestAnimation();
 #endif
 
   while (true) {
-    lv_timer_handler();
-    DelayMs(8); // 更高刷新率（根据需要可调）
+    if (lvgl_mutex_ == nullptr || xSemaphoreTake(lvgl_mutex_, pdMS_TO_TICKS(5)) == pdTRUE) {
+      lv_timer_handler();
+      if (lvgl_mutex_ != nullptr) {
+        xSemaphoreGive(lvgl_mutex_);
+      }
+    }
+    DelayMs(8); // 刷新节奏
   }
 }
 

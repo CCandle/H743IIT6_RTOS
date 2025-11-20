@@ -1,11 +1,57 @@
 #include "TestAnimation.hpp"
 #include "lvgl/lvgl.h"
 
-/**
- * @brief 更丰富的测试动画：渐变背景 + 双点弹跳，便于观察刷新。
- */
+static lv_obj_t* touch_circle = NULL;
+
+// 触摸事件回调函数
+static void screen_event_cb(lv_event_t* e) {
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_PRESSED || code == LV_EVENT_PRESSING) {
+    lv_obj_t* screen = static_cast<lv_obj_t*>(lv_event_get_target(e));
+
+    lv_indev_t* indev = lv_event_get_indev(e);
+    lv_point_t point{0, 0};
+    if (indev != nullptr) {
+      lv_indev_get_point(indev, &point);
+    }
+    lv_coord_t x = point.x;
+    lv_coord_t y = point.y;
+
+    // 创建或更新圆形
+    if (touch_circle == NULL) {
+      touch_circle = lv_obj_create(screen);
+      lv_obj_remove_style_all(touch_circle);
+      lv_obj_set_size(touch_circle, 100, 100);
+      lv_obj_set_style_radius(touch_circle, 50, 0);
+      lv_obj_set_style_bg_color(touch_circle, lv_palette_main(LV_PALETTE_RED), 0);
+      lv_obj_set_style_bg_opa(touch_circle, LV_OPA_50, 0);
+      lv_obj_set_style_border_width(touch_circle, 3, 0);
+      lv_obj_set_style_border_color(touch_circle, lv_palette_main(LV_PALETTE_RED), 0);
+      lv_obj_set_style_shadow_width(touch_circle, 20, 0);
+      lv_obj_set_style_shadow_color(touch_circle, lv_palette_main(LV_PALETTE_RED), 0);
+      lv_obj_set_style_shadow_opa(touch_circle, LV_OPA_30, 0);
+    }
+
+    // 移动圆形到触摸位置
+    lv_obj_set_pos(touch_circle, x - 50, y - 50);
+
+  } else if (code == LV_EVENT_RELEASED) {
+    // 释放时删除圆形（带动画）
+    if (touch_circle != NULL) {
+      lv_obj_fade_out(touch_circle, 300, 0);
+      // 或者直接删除：lv_obj_delete(touch_circle);
+      touch_circle = NULL;
+    }
+  }
+}
+
 void CreateTestAnimation() {
   lv_obj_t* screen = lv_screen_active();
+
+  // 添加触摸事件监听
+  lv_obj_add_event_cb(screen, screen_event_cb, LV_EVENT_ALL, NULL);
+
   lv_obj_set_style_bg_color(screen, lv_color_hex(0x0f172a), 0);
   lv_obj_set_style_bg_grad_color(screen, lv_color_hex(0x1f3b70), 0);
   lv_obj_set_style_bg_grad_dir(screen, LV_GRAD_DIR_VER, 0);
@@ -27,12 +73,12 @@ void CreateTestAnimation() {
   lv_obj_set_style_shadow_color(card, lv_color_hex(0x0ea5e9), 0);
 
   lv_obj_t* title = lv_label_create(card);
-  lv_label_set_text(title, "LVGL Preview");
+  lv_label_set_text(title, "LVGL Preview - Touch to Show Circle");
   lv_obj_set_style_text_color(title, lv_color_hex(0x9db5d4), 0);
   lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
 
   lv_obj_t* subtitle = lv_label_create(card);
-  lv_label_set_text(subtitle, "DMA Flush in Progress");
+  lv_label_set_text(subtitle, "Touch anywhere to create a 50px radius circle");
   lv_obj_set_style_text_color(subtitle, lv_color_hex(0x6ee7ff), 0);
   lv_obj_align(subtitle, LV_ALIGN_BOTTOM_MID, 0, -12);
 

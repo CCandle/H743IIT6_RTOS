@@ -29,9 +29,11 @@ public:
    * @param buf1_sem 与 buf1_ 关联的二值信号量。
    * @param buf2_sem 与 buf2_ 关联的二值信号量。
    */
-  void InjectPrimitives(QueueHandle_t& display_queue,
-                        SemaphoreHandle_t& buf1_sem,
-                        SemaphoreHandle_t& buf2_sem);
+  void inject(QueueHandle_t& display_queue,
+              SemaphoreHandle_t& buf1_sem,
+              SemaphoreHandle_t& buf2_sem,
+              SemaphoreHandle_t& lvgl_ready_sem,
+              SemaphoreHandle_t& lvgl_mutex);
 
   /**
    * @brief 获取第一个绘制缓冲区指针（供 UIOutputTask 比对释放）。
@@ -56,6 +58,8 @@ private:
   static inline QueueHandle_t display_queue_ = nullptr;
   static inline SemaphoreHandle_t buf1_sem_ = nullptr;
   static inline SemaphoreHandle_t buf2_sem_ = nullptr;
+  static inline SemaphoreHandle_t lvgl_ready_sem_ = nullptr;
+  static inline SemaphoreHandle_t lvgl_mutex_ = nullptr;
 
   /**
    * @brief 创建并配置 LVGL display 对象。

@@ -1,3 +1,4 @@
+#include "Drivers/Drivers.hpp"
 #include "IPC/IPC.hpp"
 #include "Memory/memory.hpp"
 #include "Tasks/Tasks.hpp"
@@ -7,6 +8,7 @@
 
 extern "C" void sysInit() {
   Memory::Init();
+  Drivers::init();
 }
 
 extern "C" void osInit() {

@@ -63,6 +63,7 @@ void Error_Handler(void);
 #define CTP_RST_GPIO_Port GPIOH
 #define CTP_INT_Pin GPIO_PIN_7
 #define CTP_INT_GPIO_Port GPIOH
+#define CTP_INT_EXTI_IRQn EXTI9_5_IRQn
 #define LCD_CS_Pin GPIO_PIN_12
 #define LCD_CS_GPIO_Port GPIOB
 #define LCD_NRST_Pin GPIO_PIN_11

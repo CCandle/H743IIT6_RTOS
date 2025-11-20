@@ -40,7 +40,7 @@ void UIOutputTask::clean_dcache_for_range(const void* ptr, uint32_t len) {
  * @param buf1_sem 缓冲区 1 对应的信号量。
  * @param buf2_sem 缓冲区 2 对应的信号量。
  */
-void UIOutputTask::InjectPrimitives(
+void UIOutputTask::inject(
     QueueHandle_t& display_queue,
     SemaphoreHandle_t& buf1_sem,
     SemaphoreHandle_t& buf2_sem) {

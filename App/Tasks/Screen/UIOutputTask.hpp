@@ -35,9 +35,9 @@ public:
    * @param buf1_sem 与 LVGL buf1 对应的二值信号量。
    * @param buf2_sem 与 LVGL buf2 对应的二值信号量。
    */
-  void InjectPrimitives(QueueHandle_t& display_queue,
-                        SemaphoreHandle_t& buf1_sem,
-                        SemaphoreHandle_t& buf2_sem);
+  void inject(QueueHandle_t& display_queue,
+              SemaphoreHandle_t& buf1_sem,
+              SemaphoreHandle_t& buf2_sem);
 
 private:
   static constexpr uint16_t LCD_WIDTH = 800;

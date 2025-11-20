@@ -155,5 +155,32 @@ SECTIONS
   PROVIDE(__sram2_data_end = ADDR(.sram2.data) + SIZEOF(.sram2.data));
   PROVIDE(__sram2_data_source = LOADADDR(.sram2.data));
 
+  .sram2.bss (NOLOAD) : ALIGN(4)
+  {
+      __sram2_bss_start = .;
+      *(.sram2.bss)
+      *(.sram2.bss*)
+      *(.sram2)
+      *(.sram2*)
+      __sram2_bss_end = .;
+  } >SRAM2
+
+  .axi (NOLOAD) : ALIGN(32)
+  {
+    __axi_start = .;
+    *(.axi)
+    *(.axi*)
+    . = ALIGN(32);
+    __axi_end = .;
+  } >RAM
+
+  .d3 (NOLOAD) : ALIGN(8)
+  {
+    __d3_start = .;
+    *(.d3)
+    *(.d3*)
+    . = ALIGN(8);
+    __d3_end = .;
+  } >RAM_D3
 
 }

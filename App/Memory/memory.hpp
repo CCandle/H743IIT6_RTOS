@@ -6,10 +6,10 @@ extern uint8_t __sram2_data_start[];
 extern uint8_t __sram2_data_end[];
 
 namespace Memory {
-__attribute__((section(".dtcm.bss"))) static uint8_t DTCMHeap[16 * 1024];
-__attribute__((section(".axi.bss"))) static uint8_t AXIHeap[32 * 1024];
-__attribute__((section(".d2.bss"))) static uint8_t D2Heap[8 * 1024];
-__attribute__((section(".d3.bss"))) static uint8_t D3Heap[16 * 1024];
+__attribute__((section(".dtcm.heap"))) static uint8_t DTCMHeap[16 * 1024];
+__attribute__((section(".axi.heap"))) static uint8_t AXIHeap[64 * 1024];
+__attribute__((section(".sram2.heap"))) static uint8_t D2Heap[64 * 1024];
+__attribute__((section(".d3.heap"))) static uint8_t D3Heap[16 * 1024];
 
 static HeapRegion_t MemoryRegions[] =
     {

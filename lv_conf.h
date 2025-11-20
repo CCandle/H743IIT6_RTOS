@@ -3,4 +3,6 @@
 
 #define LV_COLOR_DEPTH 16
 
+#define LV_MEM_SIZE (64U * 1024U)
+
 #endif
