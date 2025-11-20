@@ -83,7 +83,7 @@ void LVGLTask::Run() {
 #endif
 
   while (true) {
-    if (lvgl_mutex_ == nullptr || xSemaphoreTake(lvgl_mutex_, pdMS_TO_TICKS(5)) == pdTRUE) {
+    if (lvgl_mutex_ == nullptr || xSemaphoreTake(lvgl_mutex_, portMAX_DELAY) == pdTRUE) {
       lv_timer_handler();
       if (lvgl_mutex_ != nullptr) {
         xSemaphoreGive(lvgl_mutex_);
