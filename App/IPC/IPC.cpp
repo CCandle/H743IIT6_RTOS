@@ -10,7 +10,7 @@ void init() {
   display_queue = xQueueCreate(4, sizeof(DisplayMessage)); // 深度按需
   buf1_sem = xSemaphoreCreateBinary();
   buf2_sem = xSemaphoreCreateBinary();
-  lvgl_ready_sem = xSemaphoreCreateBinary();
+  lvgl_ready_sem = xSemaphoreCreateCounting(2, 0); // 触摸任务与按键任务各取一次
   lvgl_mutex = xSemaphoreCreateMutex();
   xSemaphoreGive(buf1_sem);
   xSemaphoreGive(buf2_sem);

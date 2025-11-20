@@ -8,6 +8,7 @@ class UIInputTask : public RAM_D2Task<UIInputTask, 1024> {
 public:
   void Run();
   static SemaphoreHandle_t GetSemaphore();
+  static SemaphoreHandle_t GetKeySemaphore();
   void inject(SemaphoreHandle_t lvgl_ready_sem, SemaphoreHandle_t lvgl_mutex);
 
 private:
@@ -21,6 +22,7 @@ private:
   static bool has_key_evt_;
   static SemaphoreHandle_t lvgl_ready_sem_;
   static SemaphoreHandle_t lvgl_mutex_;
+  static SemaphoreHandle_t key_sem_;
 
   // 配置参数
   static constexpr uint32_t DEBOUNCE_MS = 20;

@@ -69,6 +69,8 @@ void LVGLTask::Run() {
   (void)disp;
 
   if (lvgl_ready_sem_ != nullptr) {
+    // 触摸任务与按键任务各等待一次
+    xSemaphoreGive(lvgl_ready_sem_);
     xSemaphoreGive(lvgl_ready_sem_);
   }
 
@@ -87,7 +89,7 @@ void LVGLTask::Run() {
         xSemaphoreGive(lvgl_mutex_);
       }
     }
-    DelayMs(8); // 刷新节奏
+    DelayMs(10); // 约 10 FPS 刷新节奏
   }
 }
 
