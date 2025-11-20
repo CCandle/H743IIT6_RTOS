@@ -88,5 +88,5 @@
     "stm32h7xx_hal.h": "c",
     "lv_types.h": "c"
   },
-  "cortex-debug.variableUseNaturalFormat": false
+  "cortex-debug.variableUseNaturalFormat": true
 }
