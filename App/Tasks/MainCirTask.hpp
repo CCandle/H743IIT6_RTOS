@@ -22,6 +22,10 @@ public:
   // 注入单生产者 RingBuffer 引用
   void inject(RingBuffer<MainCirDataRaw, 64>* ringBuffer);
 
+  // 控制接口（由系统任务调用）
+  void setRunEnabled(bool enable);
+  void requestReset();
+
   // ADC DMA 结束回调中调用的静态入口
   static void OnAdcCpltFromISR();
   static void OnAdcErrorFromISR(uint32_t err_code);
@@ -36,6 +40,9 @@ private:
   bool adc_started_{false};
   bool fault_latched_{false};
   uint32_t fault_code_{0};
+  bool run_enabled_{false};
+  bool pwm_running_{false};
+  volatile bool reset_request_{false};
   RingBuffer<MainCirDataRaw, 64>* ringBuffer_{nullptr};
   Sampling sampling_;
   Protection protection_;

@@ -27,6 +27,14 @@ void MainCirTask::inject(RingBuffer<MainCirDataRaw, 64>* ringBuffer) {
   ringBuffer_ = ringBuffer;
 }
 
+void MainCirTask::setRunEnabled(bool enable) {
+  run_enabled_ = enable;
+}
+
+void MainCirTask::requestReset() {
+  reset_request_ = true;
+}
+
 void MainCirTask::Run() {
   self_handle_ = xTaskGetCurrentTaskHandle();
   g_maincir_task_handle = self_handle_;
@@ -55,13 +63,28 @@ void MainCirTask::Run() {
     if (!ringBuffer_ || fault_latched_) {
       continue;
     }
+
+    if (reset_request_) {
+      reset_request_ = false;
+      fault_latched_ = false;
+      fault_code_ = 0;
+      pwm_running_ = false;
+      if (run_enabled_) {
+        controller_.start();
+        pwm_running_ = true;
+      } else {
+        controller_.shutdown();
+      }
+    }
+
     execute();
   }
 }
 
 void MainCirTask::startHardware() {
   fault_latched_ = false;
-  controller_.start();
+  pwm_running_ = false;
+  controller_.shutdown();
 
   // TIM15: 用于 ADC 触发 OC/TRGO，计数将被 TIM1 TRGO2 复位
   HAL_TIM_OC_Start(&htim15, TIM_CHANNEL_1);
@@ -91,10 +114,22 @@ void MainCirTask::execute() {
   sampling_.update(data);
   protection_.detect(data);
 
+  if (run_enabled_ && !pwm_running_ && !fault_latched_) {
+    controller_.start();
+    pwm_running_ = true;
+  }
+
   if (data.state.Fault) {
     fault_latched_ = true;
     fault_code_ = data.state.code;
     controller_.shutdown();
+    pwm_running_ = false;
+  } else if (!run_enabled_) {
+    controller_.shutdown();
+    pwm_running_ = false;
+    data.control.Duty_IGBT_up = Duty::fromFloat(0.0f);
+    data.control.Duty_IGBT_dn = Duty::fromFloat(0.0f);
+    data.control.I_ref = Curr::fromFloat(0.0f);
   } else {
     if constexpr (SystemConfig::PWM_OPEN_LOOP) {
       data.control.Duty_IGBT_up = Duty::fromFloat(SystemConfig::PWM_OPEN_LOOP_DUTY_UP);
