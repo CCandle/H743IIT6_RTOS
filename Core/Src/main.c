@@ -23,7 +23,6 @@
 #include "dma.h"
 #include "i2c.h"
 #include "lwip.h"
-#include "sdmmc.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
@@ -126,7 +125,6 @@ int main(void)
   MX_SPI2_Init();
   MX_ADC1_Init();
   MX_I2C4_Init();
-  MX_SDMMC1_SD_Init();
   MX_TIM1_Init();
   MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
