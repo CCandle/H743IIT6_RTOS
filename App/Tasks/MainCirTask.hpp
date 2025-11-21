@@ -17,7 +17,7 @@ public:
   MainCirTask() = default;
 
   // 20 kHz 控制主循环（阻塞等待 ADC 完成通知）
-  __attribute__((section(".itcm.code"), noinline)) void Run();
+  __attribute__((section(".itcm.text"), noinline)) void Run();
 
   // 注入单生产者 RingBuffer 引用
   void inject(RingBuffer<MainCirDataRaw, 64>* ringBuffer);

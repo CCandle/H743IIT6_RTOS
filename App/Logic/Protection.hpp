@@ -5,11 +5,13 @@
 #include "IPC/SysEvents.hpp"
 #include <cmath>
 
+#define ITCM_FUNC_PROTECTION __attribute__((section(".itcm.text.protection")))
+
 class Protection {
 public:
   Protection() = default;
 
-  void detect(MainCirData& data) {
+  ITCM_FUNC_PROTECTION void detect(MainCirData& data) {
     const float v_out = data.sample.V_cap_up.toFloat() +
                   data.sample.V_cap_dn.toFloat();
     float i_bus = data.sample.I_bus.toFloat();

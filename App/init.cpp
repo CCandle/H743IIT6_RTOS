@@ -7,7 +7,15 @@
 #include "usart.h"
 #include <cstdio>
 
+static inline void EnableTCM() {
+  SCB->ITCMCR = SCB_ITCMCR_EN_Msk | SCB_ITCMCR_RMW_Msk | SCB_ITCMCR_RETEN_Msk;
+  SCB->DTCMCR = SCB_DTCMCR_EN_Msk | SCB_DTCMCR_RMW_Msk | SCB_DTCMCR_RETEN_Msk;
+  __DSB();
+  __ISB();
+}
+
 extern "C" void sysInit() {
+  EnableTCM();
   Memory::Init();
   Drivers::init();
 }

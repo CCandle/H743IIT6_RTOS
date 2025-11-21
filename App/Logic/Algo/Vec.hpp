@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <cmath>
 
+#define ITCM_FUNC_VEC __attribute__((section(".itcm.text.vec")))
+
 class Vec {
   public:
     struct Input {
@@ -31,7 +33,7 @@ class Vec {
     inline const Output& output() const noexcept { return output_; }
     inline Internal& internal() noexcept { return internal_; }
 
-    inline bool compute() noexcept {
+    ITCM_FUNC_VEC inline bool compute() noexcept {
         const float inv_I_ref = 1.0f / input_.I_ref;
 
         internal_.vec_large = input_.V_cap_up + input_.V_cap_dn;

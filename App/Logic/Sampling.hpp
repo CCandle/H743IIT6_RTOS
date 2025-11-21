@@ -3,6 +3,8 @@
 #include "Data/MainCirData.hpp"
 #include "Utils/Units/Units.hpp"
 
+#define ITCM_FUNC_SAMPLING __attribute__((section(".itcm.text.sampling")))
+
 class Sampling {
 
 public:
@@ -13,7 +15,7 @@ public:
     adcLen_ = len;
   }
 
-  void update(MainCirData& data) {
+  ITCM_FUNC_SAMPLING void update(MainCirData& data) {
     // 映射 DMA 缓冲 -> 物理量，按 CubeMX Rank 顺序配置
     if (!adcBuffer_ || adcLen_ < 4) {
       return;

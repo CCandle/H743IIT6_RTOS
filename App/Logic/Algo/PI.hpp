@@ -1,5 +1,7 @@
 #pragma once
 
+#define ITCM_FUNC_PI __attribute__((section(".itcm.text.pi")))
+
 class PI {
   public:
     struct Input {
@@ -40,7 +42,7 @@ class PI {
     inline const Output& output() const noexcept { return output_; }
     inline Internal& internal() noexcept { return internal_; }
 
-    inline bool compute() {
+    ITCM_FUNC_PI inline bool compute() {
         float& integral = internal_.integral;
 
         internal_.err = input_.ref - input_.fdb;

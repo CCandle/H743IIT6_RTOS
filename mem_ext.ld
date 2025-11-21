@@ -36,11 +36,20 @@ SECTIONS
     KEEP(*(.itcm))           /* 用户指定的 ITCM 代码 */
     KEEP(*(.itcm.code))
     KEEP(*(.itcm.code*))
+    KEEP(*(.itcm.text))
+    KEEP(*(.itcm.text*))
+    KEEP(*(.itcm_text))
+    KEEP(*(.itcm_text*))
     KEEP(*(.text.fast))
     KEEP(*(.text.fast*))
     . = ALIGN(16);
     __end_itcm_code = .;
-  } >ITCMRAM
+  } >ITCMRAM AT>FLASH
+
+  __itcm_code_load_start = LOADADDR(.itcm.code);
+  __itcm_code_load_end   = LOADADDR(.itcm.code) + SIZEOF(.itcm.code);
+  __itcm_code_start = __start_itcm_code;
+  __itcm_code_end   = __end_itcm_code;
 
   /* ======================= DTCM ======================================== */
   /* High-speed CPU-only data, not DMA accessible                         */

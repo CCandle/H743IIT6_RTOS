@@ -5,11 +5,13 @@
 #include "tim.h"
 #include <algorithm>
 
+#define ITCM_FUNC_CTRL __attribute__((section(".itcm.text.controller")))
+
 class Controller {
 public:
   Controller() = default;
 
-  void apply(MainCirData& data) {
+  ITCM_FUNC_CTRL void apply(MainCirData& data) {
     const auto& ctrl = data.control;
     float duty_up = ctrl.Duty_IGBT_up.toFloat();
     float duty_dn = 1.0f - ctrl.Duty_IGBT_dn.toFloat();
@@ -21,12 +23,12 @@ public:
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, ccr_dn);
   }
 
-  void shutdown() {
+  ITCM_FUNC_CTRL void shutdown() {
     HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
     HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
   }
 
-  void start() {
+  ITCM_FUNC_CTRL void start() {
     __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_1, 0);
     __HAL_TIM_SetCompare(&htim1, TIM_CHANNEL_2, SystemConfig::PWM_PERIOD - 1);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);

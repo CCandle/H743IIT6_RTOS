@@ -5,6 +5,8 @@
 #include "Logic/Algo/Vec.hpp"
 #include <cmath>
 
+#define ITCM_FUNC_MODULATE __attribute__((section(".itcm.text.modulate")))
+
 class Modulate {
 public:
   Modulate()
@@ -16,7 +18,7 @@ public:
         iref_slope_ts_(SystemConfig::IREF_SLOPE * SystemConfig::TS_VALUE),
         soft_started_(false) {}
 
-  void compute(MainCirData& data) {
+  ITCM_FUNC_MODULATE void compute(MainCirData& data) {
     auto& sample = data.sample;
     auto& control = data.control;
 
