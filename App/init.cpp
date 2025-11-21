@@ -1,5 +1,6 @@
 #include "Drivers/Drivers.hpp"
 #include "IPC/IPC.hpp"
+#include "IPC/LogIPC.hpp"
 #include "Memory/memory.hpp"
 #include "Tasks/Tasks.hpp"
 #include "UartLogger.hpp"
@@ -13,6 +14,7 @@ extern "C" void sysInit() {
 
 extern "C" void osInit() {
   IPC::init();
+  IPC::Log::init();
   Tasks::init();
   uartLoggerInit(&huart1);
   printf("USART1 printf ready!\r\n");
