@@ -4,6 +4,7 @@
 #include "Drivers/Interfaces.hpp"
 #include "GT1151Q.hpp"
 #include "GpioKeys.hpp"
+#include "KeyDriver.hpp"
 #include "main.h"
 
 namespace Drivers {
@@ -16,6 +17,11 @@ ITouchDevice& GetPrimaryTouch();
  * @brief 获取主按键设备（最多 6 个 GPIO 按键）。
  */
 IKeyDevice& GetPrimaryKeys();
+
+/**
+ * @brief 获取按键驱动实例。
+ */
+KeyDriver& GetKeyDriver();
 
 /**
  * @brief 配置单个按键的引脚与键值。

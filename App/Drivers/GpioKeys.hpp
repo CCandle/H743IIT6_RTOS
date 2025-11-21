@@ -37,6 +37,19 @@ public:
 
   /// 可选：设置消抖/长按时序，默认 20ms/2000ms/200ms/10000ms。
   void SetTimings(const Timings& t) { timings_ = t; }
+  const Timings& GetTimings() const { return timings_; }
+
+  /**
+   * @brief 读取单个按键当前是否为按下状态。
+   */
+  bool ReadKeyRaw(std::size_t idx, bool& pressed) const;
+
+  /**
+   * @brief 获取按键对应的 LVGL 键值。
+   */
+  uint32_t GetLvglKey(std::size_t idx) const {
+    return (idx < kMaxKeys) ? keys_[idx].lvgl_key : 0;
+  }
 
   /**
    * @brief 轮询一次按键，返回一条事件（若有）。
@@ -46,11 +59,6 @@ public:
   std::optional<KeyEvent> Poll(uint32_t now_ms);
 
 private:
-  bool ReadKeyRaw(std::size_t idx, bool& pressed) const;
-  uint32_t GetLvglKey(std::size_t idx) const {
-    return (idx < kMaxKeys) ? keys_[idx].lvgl_key : 0;
-  }
-
   struct KeyRuntime {
     bool valid = false;
     bool stable_pressed = false;

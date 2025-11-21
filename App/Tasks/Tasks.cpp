@@ -10,7 +10,8 @@ void TaskStartFailHandle() {
 void init() {
   lvgl_task.inject(IPC::display_queue, IPC::buf1_sem, IPC::buf2_sem, IPC::lvgl_ready_sem, IPC::lvgl_mutex);
   UI_output_task.inject(IPC::display_queue, IPC::buf1_sem, IPC::buf2_sem);
-  ui_input_task.inject(IPC::lvgl_ready_sem, IPC::lvgl_mutex);
+  touch_input_task.inject(IPC::lvgl_ready_sem, IPC::lvgl_mutex);
+  key_input_task.inject(IPC::lvgl_ready_sem, IPC::lvgl_mutex);
 }
 
 void startTasks() {
@@ -20,13 +21,16 @@ void startTasks() {
   // if (!lcd_task.Start("LCDTask", configMAX_PRIORITIES - 1)) {
   //   TaskStartFailHandle();
   // }
-  if (!ui_input_task.Start("UI_Input_Task", configMAX_PRIORITIES - 1)) {
+  if (!touch_input_task.Start("Touch_Input_Task", configMAX_PRIORITIES - 1)) {
     TaskStartFailHandle();
   }
-  if (!UI_output_task.Start("UI_Output_Task", configMAX_PRIORITIES - 2)) {
+  if (!key_input_task.Start("Key_Input_Task", configMAX_PRIORITIES - 2)) {
     TaskStartFailHandle();
   }
-  if (!lvgl_task.Start("LVGL_Task", configMAX_PRIORITIES - 3)) {
+  if (!UI_output_task.Start("UI_Output_Task", configMAX_PRIORITIES - 3)) {
+    TaskStartFailHandle();
+  }
+  if (!lvgl_task.Start("LVGL_Task", configMAX_PRIORITIES - 4)) {
     TaskStartFailHandle();
   }
 }

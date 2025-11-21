@@ -2,6 +2,8 @@
 #include "lvgl/lvgl.h"
 
 static lv_obj_t* touch_circle = NULL;
+static lv_obj_t* key_status_label = nullptr;
+static uint32_t repeat_counter = 0;
 
 // 触摸事件回调函数
 static void screen_event_cb(lv_event_t* e) {
@@ -81,6 +83,10 @@ void CreateTestAnimation() {
   lv_label_set_text(subtitle, "Touch anywhere to create a 50px radius circle");
   lv_obj_set_style_text_color(subtitle, lv_color_hex(0x6ee7ff), 0);
   lv_obj_align(subtitle, LV_ALIGN_BOTTOM_MID, 0, -12);
+
+  key_status_label = lv_label_create(screen);
+  lv_label_set_text(key_status_label, "key: none");
+  lv_obj_align(key_status_label, LV_ALIGN_BOTTOM_LEFT, 12, -12);
 
   auto create_dot = [](lv_obj_t* parent, lv_color_t color) {
     lv_obj_t* dot = lv_obj_create(parent);
@@ -179,4 +185,17 @@ void CreateTestAnimation() {
         lv_obj_set_pos(state->dot_b, state->x_b, state->y_b);
       },
       16, &ctx);
+}
+
+void UpdateKeyStatus(const char* status, uint32_t repeat_count) {
+  if (key_status_label == nullptr)
+    return;
+  repeat_counter = repeat_count;
+  static char buf[64];
+  if (repeat_count > 0 && (status != nullptr)) {
+    lv_snprintf(buf, sizeof(buf), "key: %s (%lu)", status, static_cast<unsigned long>(repeat_count));
+  } else {
+    lv_snprintf(buf, sizeof(buf), "key: %s", status ? status : "none");
+  }
+  lv_label_set_text(key_status_label, buf);
 }

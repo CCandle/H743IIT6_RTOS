@@ -27,7 +27,8 @@ enum class KeyState {
   Press,
   Release,
   LongRelease,
-  LongRepeat
+  LongRepeat,
+  Cancel
 };
 
 /// 按键事件（键值沿用 LVGL key 定义）

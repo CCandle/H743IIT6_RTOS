@@ -9,6 +9,10 @@ GpioKeys& KeyDevice() {
   static GpioKeys keys;
   return keys;
 }
+KeyDriver& KeyDrv() {
+  static KeyDriver driver;
+  return driver;
+}
 } // namespace
 
 /**
@@ -29,6 +33,10 @@ void init() {
 
 IKeyDevice& GetPrimaryKeys() {
   return KeyDevice();
+}
+
+KeyDriver& GetKeyDriver() {
+  return KeyDrv();
 }
 
 void ConfigureKey(std::size_t idx, GPIO_TypeDef* port, uint16_t pin, uint32_t lvgl_key, bool active_low) {

@@ -14,7 +14,7 @@ void KeyInputTask::Run() {
   auto& key_drv = Drivers::GetKeyDriver();
   key_drv.Init();
   key_drv.ConfigureKey(0, GPIOI, GPIO_PIN_8, LV_KEY_ENTER, false); // 高电平按下
-  key_drv.SetTimings({20, 2000, 200, 10000});
+  key_drv.SetTimings({20, 1000, 100, 5000});
 
   if (lvgl_ready_sem_ != nullptr) {
     xSemaphoreTake(lvgl_ready_sem_, portMAX_DELAY);
