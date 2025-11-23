@@ -89,11 +89,6 @@
     "lv_types.h": "c"
   },
   "files.exclude": {
-    "**/.mxproject": true,
-    "*.mxproject": true,
-    "**/*.ioc": true,
-    "build": true,
-    ".cmake": true
   },
   "files.watcherExclude": {
     "**/.mxproject": true,
