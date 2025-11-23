@@ -14,6 +14,7 @@
             ],
             // "runToEntryPoint": "main",
             "preLaunchTask": "Build Debug",
+            // "gdbPath": "/opt/homebrew/bin/arm-none-eabi-gdb",
             // "svdFile": "${workspaceFolder}/STM32F4xx.svd", // 可选：寄存器视图支持
             "postLaunchCommands": [
                 "monitor reset halt"
@@ -34,6 +35,7 @@
             ],
             // "runToEntryPoint": "main",
             "preLaunchTask": "Build Release",
+            // "gdbPath": "/opt/homebrew/bin/arm-none-eabi-gdb",
             // "svdFile": "${workspaceFolder}/STM32F4xx.svd",
             "postLaunchCommands": [
                 "monitor reset halt"

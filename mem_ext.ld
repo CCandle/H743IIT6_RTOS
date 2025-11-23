@@ -17,7 +17,7 @@
 /* ======================================================================= */
 SECTIONS
 {
-wip_sec (NOLOAD) : 
+  wip_sec (NOLOAD) : 
   { 
     . = ABSOLUTE(0x30040000); 
     *(.RxDecripSection) 
@@ -27,7 +27,7 @@ wip_sec (NOLOAD) :
     
     . = ABSOLUTE(0x30040100); 
     *(.Rx_PoolSection)   
-  } >RAM_D2 
+  } >SRAM3 
   /* ======================= ITCM ======================================== */
   /* Highest-speed instruction memory, CPU-only (not for data)            */
   .itcm.code : ALIGN(16)
@@ -36,11 +36,20 @@ wip_sec (NOLOAD) :
     KEEP(*(.itcm))           /* 用户指定的 ITCM 代码 */
     KEEP(*(.itcm.code))
     KEEP(*(.itcm.code*))
+    KEEP(*(.itcm.text))
+    KEEP(*(.itcm.text*))
+    KEEP(*(.itcm_text))
+    KEEP(*(.itcm_text*))
     KEEP(*(.text.fast))
     KEEP(*(.text.fast*))
     . = ALIGN(16);
     __end_itcm_code = .;
-  } >ITCMRAM
+  } >ITCMRAM AT>FLASH
+
+  __itcm_code_load_start = LOADADDR(.itcm.code);
+  __itcm_code_load_end   = LOADADDR(.itcm.code) + SIZEOF(.itcm.code);
+  __itcm_code_start = __start_itcm_code;
+  __itcm_code_end   = __end_itcm_code;
 
   /* ======================= DTCM ======================================== */
   /* High-speed CPU-only data, not DMA accessible                         */
@@ -101,7 +110,7 @@ wip_sec (NOLOAD) :
     KEEP(*(.d2.data*))
     . = ALIGN(8);
     __end_d2_data = .;
-  } >RAM_D2
+  } >SRAM1
 
   .d2.bss (NOLOAD) : ALIGN(8)
   {
@@ -112,7 +121,7 @@ wip_sec (NOLOAD) :
     *(.d2.bss*)
     . = ALIGN(8);
     __end_d2_bss = .;
-  } >RAM_D2
+  } >SRAM1
 
   /* ======================= D3 SRAM ===================================== */
   /* Shared or retained memory (low-speed, for system states)             */
@@ -137,4 +146,50 @@ wip_sec (NOLOAD) :
     . = ALIGN(8);
     __end_d3_bss = .;
   } >RAM_D3
+
+  /* SRAM2 initialized data: RUN in SRAM2, LOAD from FLASH */
+  .sram2.data : ALIGN(4)
+  {
+      __sram2_data_start = .;
+      KEEP(*(.sram2.data))
+      KEEP(*(.sram2.data*))
+      __sram2_data_end = .;
+  } >SRAM2 AT> FLASH
+
+  /* Flash load address */
+  __sram2_data_source = LOADADDR(.sram2.data);
+
+  /* Sizes */
+  PROVIDE(__sram2_data_start = ADDR(.sram2.data));
+  PROVIDE(__sram2_data_end = ADDR(.sram2.data) + SIZEOF(.sram2.data));
+  PROVIDE(__sram2_data_source = LOADADDR(.sram2.data));
+
+  .sram2.bss (NOLOAD) : ALIGN(4)
+  {
+      __sram2_bss_start = .;
+      *(.sram2.bss)
+      *(.sram2.bss*)
+      *(.sram2)
+      *(.sram2*)
+      __sram2_bss_end = .;
+  } >SRAM2
+
+  .axi (NOLOAD) : ALIGN(32)
+  {
+    __axi_start = .;
+    *(.axi)
+    *(.axi*)
+    . = ALIGN(32);
+    __axi_end = .;
+  } >RAM
+
+  .d3 (NOLOAD) : ALIGN(8)
+  {
+    __d3_start = .;
+    *(.d3)
+    *(.d3*)
+    . = ALIGN(8);
+    __d3_end = .;
+  } >RAM_D3
+
 }

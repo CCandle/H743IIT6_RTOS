@@ -25,7 +25,8 @@
         {
             "label": "Clean Debug",
             "type": "shell",
-            "command": "ninja -C build/Debug clean"
+            "command": "ninja -C build/Debug clean",
+            "problemMatcher": []
         },
         {
             "label": "Clean Release",

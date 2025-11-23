@@ -1,28 +1,51 @@
-
+# Build output
 build/
+Build/
+out/
+bin/
+obj/
+Debug/
+Release/
 
-
-# --- CMake 生成文件 ---
+# CMake
 CMakeCache.txt
 CMakeFiles/
+cmake-build-*/
+*.cmake
 Makefile
-cmake_install.cmake
+install_manifest.txt
+compile_commands.json
 
+# Compiler artifacts
+*.o
+*.d
+*.a
+*.elf
+*.so
+*.bin
+*.hex
+*.map
+*.lst
+*.srec
 
+# STM32 CubeMX
+*.launch
+MX/
 
+# Generated docs
+docs/html/
+docs/latex/
 
+# Logs
+*.log
 
-# --- macOS 系统文件 ---
+# IDE
+.idea/
+*.code-workspace
+
 .DS_Store
-.AppleDouble
-.LSOverride
-._*
-.Trashes
-*.swp
-*.tmp
 
+lvgl
 
-
-
-
-
+.mxproject
+*.ioc
