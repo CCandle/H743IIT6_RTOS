@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Drivers/Interfaces.hpp"
-#include "Lib/TaskBase.hpp"
+#include "OS/TaskBase.hpp"
 #include "lvgl.h"
 #include "semphr.h"
 

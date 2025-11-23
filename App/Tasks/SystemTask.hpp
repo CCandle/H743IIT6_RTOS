@@ -2,7 +2,7 @@
 #include "Config/TaskConfig.hpp"
 #include "Data/Snapshot.hpp"
 #include "IPC/ControlIPC.hpp"
-#include "Lib/TaskBase.hpp"
+#include "OS/TaskBase.hpp"
 #include "Tasks/MainCirTask.hpp"
 #include "FreeRTOS.h"
 #include "queue.h"

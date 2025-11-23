@@ -46,6 +46,8 @@ add_executable(${CMAKE_PROJECT_NAME})
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 add_subdirectory(lvgl)
+add_subdirectory(OS)
+add_subdirectory(DriversExt)
 add_subdirectory(App)
 add_subdirectory(LCD_Drivers)
 
@@ -78,6 +80,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
 
     # Add user defined libraries
+    OS
+    DriversExt
     App
     LCD_Drivers
     lvgl

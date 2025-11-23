@@ -4,12 +4,13 @@
 
 #include "FreeRTOS.h"
 #include "LT768_Lib.h"
-#include "Lib/TaskBase.hpp"
+#include "OS/TaskBase.hpp"
 #include "lvgl/lvgl.h"
 #include "main.h"
 #include "queue.h"
 #include "semphr.h"
 #include "spi.h"
+#include "LT768Driver.hpp"
 
 /// 显示消息结构
 struct DisplayMessage {
@@ -43,6 +44,8 @@ private:
   static constexpr uint16_t LCD_WIDTH = 800;
   static constexpr uint16_t LCD_HEIGHT = 480;
   static constexpr uint32_t CANVAS_BASE = 800 * 480 * 8;
+
+  static inline LT768Driver lcd_driver_{};
 
   // 同步原语指针
   static inline QueueHandle_t display_queue_ = nullptr;

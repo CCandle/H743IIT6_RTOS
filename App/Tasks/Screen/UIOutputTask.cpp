@@ -59,27 +59,7 @@ void UIOutputTask::inject(
  * @brief 完成 LT768 初始化和窗口配置。
  */
 void UIOutputTask::InitializeDisplay() {
-  Parallel_Init();
-  LT768_Init();
-  DelayMs(100);
-
-  Display_ON();
-
-  Select_Main_Window_16bpp();
-  Main_Image_Start_Address(0);
-  Main_Image_Width(LCD_WIDTH);
-  Main_Window_Start_XY(0, 0);
-
-  Active_Window_XY(0, 0);
-  Active_Window_WH(LCD_WIDTH, LCD_HEIGHT);
-
-  DelayMs(100);
-
-  LT768_PWM1_Init(1, 0, 50, 100, 100);
-  DelayMs(100);
-
-  Canvas_Image_Start_address(CANVAS_BASE);
-  Canvas_image_width(LCD_WIDTH);
+  lcd_driver_.Init(LCD_WIDTH, LCD_HEIGHT, CANVAS_BASE);
 }
 
 /**
@@ -169,16 +149,7 @@ void UIOutputTask::DrawBitmapDMA(uint32_t canvas_base,
   for (uint16_t row = 0; row < height; row++) {
     uint32_t addr = canvas_base + ((uint32_t)(y + row) * LCD_WIDTH + x) * 2;
 
-    Goto_Linear_Addr(addr);
-    LCD_CmdWrite(0x04);
-
-    SPI_CS_choosed();
-    SPI2_ReadWriteByte(0x80);
-
-    // 启动 DMA 输出（不要在启动前 take dma_done_sem_）
-    HAL_StatusTypeDef status = HAL_SPI_Transmit_DMA(&hspi2,
-                                                    const_cast<uint8_t*>(line_ptr),
-                                                    static_cast<uint16_t>(bytes_per_line));
+    HAL_StatusTypeDef status = lcd_driver_.StartLineDMA(addr, line_ptr, static_cast<uint16_t>(bytes_per_line));
     if (status != HAL_OK) {
       // DMA 启动失败：尽量恢复（解锁）并退出行循环
       // 触发回退：直接不给予 dma_done_sem_，跳出

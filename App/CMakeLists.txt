@@ -30,6 +30,10 @@ set_source_files_properties(${APP_CPP_SOURCES} PROPERTIES LANGUAGE CXX)
 target_include_directories(App PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/Utils
+    ${CMAKE_SOURCE_DIR}/OS
+    ${CMAKE_SOURCE_DIR}/OS/Memory
+    ${CMAKE_SOURCE_DIR}/DriversExt
+    ${CMAKE_SOURCE_DIR}/DriversExt/LCD
     ${CMAKE_SOURCE_DIR}/Core/Inc
     ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Inc
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32H7xx/Include
@@ -54,6 +58,8 @@ target_compile_options(App PRIVATE
 # ---- Link CubeMX core ----
 target_link_libraries(App PUBLIC
     stm32cubemx
+    OS
+    DriversExt
     LCD_Drivers
     lvgl
 )
