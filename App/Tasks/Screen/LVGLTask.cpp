@@ -2,6 +2,9 @@
 
 #include "UIOutputTask.hpp" // DisplayMessage struct
 #include "Test/Config.hpp"
+#include "Tasks/Screen/MainScreen.hpp"
+#include "IPC/LogIPC.hpp"
+#include "IPC/ControlIPC.hpp"
 #if LVGL_TEST_ANIMATION
 #include "Test/UI/TestAnimation.hpp"
 #endif
@@ -67,6 +70,9 @@ void LVGLTask::Run() {
   // 初始化显示驱动
   lv_display_t* disp = CreateDisplayDriver();
   (void)disp;
+
+  // 创建主测试界面
+  UI::CreateMainScreen(IPC::Control::control_queue, &IPC::Log::snapshot_store);
 
   if (lvgl_ready_sem_ != nullptr) {
     // 触摸任务与按键任务各等待一次

@@ -4,6 +4,9 @@
 extern uint8_t __sram2_data_source[];
 extern uint8_t __sram2_data_start[];
 extern uint8_t __sram2_data_end[];
+extern uint8_t __itcm_code_load_start;
+extern uint8_t __itcm_code_start;
+extern uint8_t __itcm_code_end;
 
 namespace Memory {
 __attribute__((section(".dtcm.heap"))) static uint8_t DTCMHeap[16 * 1024];
@@ -21,8 +24,10 @@ static HeapRegion_t MemoryRegions[] =
 };
 
 void CopySram2Data(void);
+void CopyItcmCode(void);
 
 inline void Init() {
+  CopyItcmCode();
   CopySram2Data();
   vPortDefineHeapRegions(MemoryRegions);
 }

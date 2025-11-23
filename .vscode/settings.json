@@ -88,5 +88,21 @@
     "stm32h7xx_hal.h": "c",
     "lv_types.h": "c"
   },
+  "files.exclude": {
+    "**/.mxproject": true,
+    "*.mxproject": true,
+    "**/*.ioc": true,
+    "build": true,
+    ".cmake": true
+  },
+  "files.watcherExclude": {
+    "**/.mxproject": true,
+    "**/*.ioc": true
+  },
+  "C_Cpp.files.exclude": {
+    "**/.mxproject": true,
+    "**/*.ioc": true,
+    "**/build/**": true
+  },
   "cortex-debug.variableUseNaturalFormat": true
 }
